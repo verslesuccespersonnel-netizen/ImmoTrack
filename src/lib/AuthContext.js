@@ -1,4 +1,3 @@
-// src/lib/AuthContext.js
 import React, { createContext, useContext, useEffect, useState } from 'react'
 import { supabase } from './supabase'
 
@@ -8,84 +7,48 @@ export function AuthProvider({ children }) {
   const [session, setSession] = useState(null)
   const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
-  const [debugInfo, setDebugInfo] = useState('')
 
   useEffect(() => {
     let active = true
-    const kill = setTimeout(() => { if (active) setLoading(false) }, 12000)
+    const timer = setTimeout(() => { if(active) setLoading(false) }, 10000)
 
-    async function fetchProfile(userId) {
-      setDebugInfo(`Lecture profil pour ${userId.slice(0,8)}...`)
-
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .maybeSingle()
-
-      if (error) {
-        setDebugInfo(`ERREUR RLS: ${error.message}`)
-        console.error('Profile RLS error:', error)
-        return null
+    supabase.auth.getSession().then(async ({ data: { session }}) => {
+      if (!active) return
+      setSession(session)
+      if (session?.user) {
+        const p = await loadProfile(session.user.id)
+        if (active) setProfile(p)
       }
+      if (active) setLoading(false)
+    })
 
-      if (!data) {
-        setDebugInfo(`Profil introuvable — attente trigger...`)
-        await new Promise(r => setTimeout(r, 1500))
-        const { data: d2, error: e2 } = await supabase
-          .from('profiles').select('*').eq('id', userId).maybeSingle()
-        if (e2) { setDebugInfo(`ERREUR 2: ${e2.message}`); return null }
-        setDebugInfo(d2 ? `Profil OK: ${d2.role}` : 'Profil absent après 2 essais')
-        return d2 || null
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (!active) return
+      setSession(session)
+      if (event === 'SIGNED_OUT') { setProfile(null); setLoading(false); return }
+      if (session?.user) {
+        setLoading(true)
+        const p = await loadProfile(session.user.id)
+        if (active) { setProfile(p); setLoading(false) }
       }
+    })
 
-      setDebugInfo(`Profil chargé: role=${data.role}`)
-      console.log('Profile loaded:', data)
-      return data
-    }
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (!active) return
-        console.log('Auth event:', event, 'user:', session?.user?.id)
-        setSession(session)
-
-        if (!session?.user) {
-          setProfile(null)
-          setLoading(false)
-          return
-        }
-
-        const p = await fetchProfile(session.user.id)
-        if (!active) return
-        setProfile(p)
-        setLoading(false)
-      }
-    )
-
-    return () => {
-      active = false
-      clearTimeout(kill)
-      subscription.unsubscribe()
-    }
+    return () => { active = false; clearTimeout(timer); subscription.unsubscribe() }
   }, [])
 
-  async function reloadProfile() {
-    const { data: { session } } = await supabase.auth.getSession()
-    if (!session?.user) return
-    const { data } = await supabase
-      .from('profiles').select('*').eq('id', session.user.id).maybeSingle()
-    setProfile(data || null)
-  }
-
-  // debugInfo exposé pour affichage dans l'UI si besoin
   return (
-    <AuthContext.Provider value={{ session, profile, loading, reloadProfile, debugInfo }}>
+    <AuthContext.Provider value={{ session, profile, loading }}>
       {children}
     </AuthContext.Provider>
   )
 }
 
-export function useAuth() {
-  return useContext(AuthContext)
+async function loadProfile(userId) {
+  const { data, error } = await supabase
+    .from('profiles').select('*').eq('id', userId).single()
+  if (error) { console.error('Profile error:', error.code, error.message); return null }
+  console.log('Profile OK:', data.role)
+  return data
 }
+
+export function useAuth() { return useContext(AuthContext) }
