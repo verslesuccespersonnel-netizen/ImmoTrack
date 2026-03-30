@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../lib/AuthContext'
+import VersionBadge from './VersionBadge'
 import { supabase } from '../lib/supabase'
 
 const NAV = {
@@ -11,6 +12,7 @@ const NAV = {
     { path:'/signaler',  label:'Signaler',       icon:'➕' },
     { path:'/documents', label:'Documents',      icon:'📄' },
     { path:'/messages',  label:'Messages',       icon:'💬', badge:true },
+    { path:'/demo',      label:'Démonstration',  icon:'🎯', divider:true },
   ],
   proprietaire: [
     { path:'/',             label:'Tableau de bord', icon:'📊' },
@@ -21,6 +23,7 @@ const NAV = {
     { path:'/messages',     label:'Messages',        icon:'💬', badge:true },
     { path:'/catalogue',    label:'Catalogue',       icon:'📚', divider:true },
     { path:'/admin',        label:'Administration',  icon:'⚙️' },
+    { path:'/demo',         label:'Démonstration',   icon:'🎯' },
   ],
   gestionnaire: [
     { path:'/',             label:'Tableau de bord', icon:'📊' },
@@ -31,6 +34,7 @@ const NAV = {
     { path:'/messages',     label:'Messages',        icon:'💬', badge:true },
     { path:'/catalogue',    label:'Catalogue',       icon:'📚', divider:true },
     { path:'/admin',        label:'Administration',  icon:'⚙️' },
+    { path:'/demo',         label:'Démonstration',   icon:'🎯' },
   ],
 }
 
