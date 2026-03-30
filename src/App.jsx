@@ -14,54 +14,62 @@ import Prestataires     from './pages/Prestataires'
 import Admin            from './pages/Admin'
 import Catalogue        from './pages/Catalogue'
 import PlanBien         from './pages/PlanBien'
+import Demo             from './pages/Demo'
 
 function NotConfigured() {
   return (
     <div style={{ minHeight:'100vh', background:'#F7F5F0', display:'flex', alignItems:'center', justifyContent:'center', padding:24, fontFamily:'sans-serif' }}>
-      <div style={{ background:'#fff', borderRadius:16, padding:'36px 32px', maxWidth:480, width:'100%' }}>
-        <div style={{ fontFamily:'Georgia,serif', fontSize:24, marginBottom:16 }}>
+      <div style={{ background:'#fff', borderRadius:16, padding:'32px', maxWidth:440, width:'100%' }}>
+        <div style={{ fontFamily:'Georgia,serif', fontSize:22, marginBottom:14 }}>
           <span style={{ color:'#2D5A3D' }}>Immo</span><span style={{ color:'#C8813A' }}>Track</span>
         </div>
-        <code style={{ display:'block', background:'#1A1714', color:'#7EB89A', padding:'12px', borderRadius:8, fontSize:12, marginBottom:12, lineHeight:1.8 }}>
-          REACT_APP_SUPABASE_URL = ...<br/>REACT_APP_SUPABASE_ANON_KEY = ...
-        </code>
-        <div style={{ background:'#E8F2EB', padding:'10px 14px', borderRadius:8, fontSize:13, color:'#2D5A3D' }}>
-          Vercel → Settings → Environment Variables → Redeploy
-        </div>
+        <p style={{ color:'#B83232', fontSize:13 }}>Variables Supabase manquantes dans Vercel.</p>
       </div>
     </div>
   )
 }
 
+// Écran affiché pendant le chargement du profil
+// Montre l'erreur exacte si la RLS bloque
 function LoadingScreen() {
-  const { debugInfo } = useAuth()
+  const { profileError } = useAuth()
 
-  async function logout() {
+  function logout() {
     Object.keys(localStorage).forEach(k => {
       if (k.startsWith('sb-') || k.includes('supabase')) localStorage.removeItem(k)
     })
     sessionStorage.clear()
-    try { await supabase.auth.signOut() } catch(e) {}
-    window.location.replace('/connexion')
+    supabase.auth.signOut().finally(() => window.location.replace('/connexion'))
   }
 
   return (
-    <div style={{ display:'flex', alignItems:'center', justifyContent:'center', minHeight:'100vh', flexDirection:'column', gap:16, background:'#F7F5F0', fontFamily:'sans-serif' }}>
+    <div style={{ display:'flex', alignItems:'center', justifyContent:'center', minHeight:'100vh',
+                  flexDirection:'column', gap:16, background:'#F7F5F0', fontFamily:'sans-serif', padding:20 }}>
       <div style={{ fontFamily:'Georgia,serif', fontSize:24 }}>
         <span style={{ color:'#2D5A3D' }}>Immo</span><span style={{ color:'#C8813A' }}>Track</span>
       </div>
-      <div style={{ width:36, height:36, borderRadius:'50%', border:'3px solid #E8F2EB', borderTopColor:'#2D5A3D', animation:'spin 0.8s linear infinite' }}/>
-      {/* Info de debug visible */}
-      {debugInfo && (
-        <div style={{ fontSize:12, color:'#6B6560', background:'#F0EDE6', padding:'6px 14px', borderRadius:20, maxWidth:320, textAlign:'center' }}>
-          {debugInfo}
+
+      {profileError ? (
+        // Afficher l'erreur exacte plutôt que le spinner
+        <div style={{ maxWidth:400, width:'100%' }}>
+          <div style={{ background:'#FDEAEA', border:'1px solid #F7C1C1', borderRadius:10,
+                        padding:'16px', fontSize:13, color:'#B83232', lineHeight:1.6,
+                        fontFamily:'monospace', wordBreak:'break-all', marginBottom:12 }}>
+            {profileError}
+          </div>
+          <div style={{ fontSize:12, color:'#6B6560', textAlign:'center', marginBottom:12 }}>
+            Cette erreur signifie que la RLS Supabase bloque la lecture du profil.
+            Exécutez le SQL de fix_definitif.sql dans Supabase.
+          </div>
         </div>
+      ) : (
+        <div style={{ width:36, height:36, borderRadius:'50%', border:'3px solid #E8F2EB',
+                      borderTopColor:'#2D5A3D', animation:'spin 0.8s linear infinite' }}/>
       )}
-      <button onClick={logout} style={{
-        padding:'10px 24px', background:'#fff', border:'1px solid rgba(0,0,0,0.18)',
-        borderRadius:8, cursor:'pointer', fontFamily:'sans-serif', fontSize:13,
-        color:'#B83232', fontWeight:500, marginTop:4,
-      }}>
+
+      <button onClick={logout} style={{ padding:'9px 22px', background:'#fff',
+        border:'1px solid rgba(184,50,50,0.3)', borderRadius:8, cursor:'pointer',
+        fontFamily:'sans-serif', fontSize:13, color:'#B83232', fontWeight:500 }}>
         🚪 Se déconnecter
       </button>
     </div>
@@ -92,6 +100,7 @@ function AppRoutes() {
       <Route path="/prestataires"   element={<ProtectedRoute roles={['proprietaire','gestionnaire']}><Prestataires /></ProtectedRoute>} />
       <Route path="/catalogue"      element={<ProtectedRoute roles={['proprietaire','gestionnaire']}><Catalogue /></ProtectedRoute>} />
       <Route path="/admin"          element={<ProtectedRoute roles={['gestionnaire','proprietaire']}><Admin /></ProtectedRoute>} />
+      <Route path="/demo"          element={<ProtectedRoute><Demo /></ProtectedRoute>} />
       <Route path="*"               element={<Navigate to="/" replace />} />
     </Routes>
   )
