@@ -15,6 +15,7 @@ import Admin            from './pages/Admin'
 import Catalogue        from './pages/Catalogue'
 import PlanBien         from './pages/PlanBien'
 import Demo             from './pages/Demo'
+import Locataires       from './pages/Locataires'
 
 function NotConfigured() {
   return (
@@ -35,14 +36,20 @@ function NotConfigured() {
 }
 
 function LoadingScreen() {
+  const [waited, setWaited] = React.useState(false)
+  React.useEffect(() => { const t = setTimeout(() => setWaited(true), 3000); return () => clearTimeout(t) }, [])
+
   async function logout() {
-    Object.keys(localStorage).forEach(k => {
-      if (k.startsWith('sb-') || k.includes('supabase')) localStorage.removeItem(k)
-    })
-    sessionStorage.clear()
-    try { await supabase.auth.signOut() } catch(e) {}
+    try {
+      Object.keys(localStorage).forEach(k => {
+        if (k.startsWith('sb-') || k.includes('supabase')) localStorage.removeItem(k)
+      })
+      sessionStorage.clear()
+      await supabase.auth.signOut()
+    } catch(e) { console.error(e) }
     window.location.replace('/connexion')
   }
+
   return (
     <div style={{ display:'flex', alignItems:'center', justifyContent:'center', minHeight:'100vh',
       flexDirection:'column', gap:20, background:'#F7F5F0', fontFamily:'sans-serif' }}>
@@ -51,32 +58,26 @@ function LoadingScreen() {
       </div>
       <div style={{ width:36, height:36, borderRadius:'50%', border:'3px solid #E8F2EB',
         borderTopColor:'#2D5A3D', animation:'spin 0.8s linear infinite' }}/>
-      <button onClick={logout} style={{ padding:'9px 22px', background:'#fff',
-        border:'1px solid rgba(184,50,50,0.3)', borderRadius:8, cursor:'pointer',
-        fontFamily:'sans-serif', fontSize:13, color:'#B83232', fontWeight:500 }}>
-        🚪 Se déconnecter
-      </button>
+      {waited && (
+        <button onClick={logout} style={{
+          padding:'10px 24px', background:'#fff',
+          border:'1px solid rgba(184,50,50,0.35)', borderRadius:8, cursor:'pointer',
+          fontFamily:'sans-serif', fontSize:13, color:'#B83232', fontWeight:600,
+          boxShadow:'0 2px 8px rgba(0,0,0,0.08)'
+        }}>
+          🚪 Se déconnecter
+        </button>
+      )}
     </div>
   )
 }
 
 function ProtectedRoute({ children, roles }) {
   const { session, profile, loading } = useAuth()
-
-  // Toujours afficher loading si on attend encore
   if (loading) return <LoadingScreen />
-
-  // Pas de session → login
   if (!session) return <Navigate to="/connexion" replace />
-
-  // Si profil pas encore chargé mais session ok → on attend (ne pas rediriger)
   if (!profile) return <LoadingScreen />
-
-  // Vérification du rôle
-  if (roles && !roles.includes(profile.role)) {
-    return <Navigate to="/" replace />
-  }
-
+  if (roles && !roles.includes(profile.role)) return <Navigate to="/" replace />
   return children
 }
 
@@ -84,20 +85,21 @@ function AppRoutes() {
   const { session } = useAuth()
   return (
     <Routes>
-      <Route path="/connexion"      element={session ? <Navigate to="/" replace /> : <AuthPage />} />
-      <Route path="/"               element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-      <Route path="/incidents"      element={<ProtectedRoute><Incidents /></ProtectedRoute>} />
-      <Route path="/incidents/:id"  element={<ProtectedRoute><Incidents /></ProtectedRoute>} />
-      <Route path="/signaler"       element={<ProtectedRoute><SignalerIncident /></ProtectedRoute>} />
-      <Route path="/documents"      element={<ProtectedRoute><Documents /></ProtectedRoute>} />
-      <Route path="/messages"       element={<ProtectedRoute><Messages /></ProtectedRoute>} />
-      <Route path="/biens"          element={<ProtectedRoute roles={['proprietaire','gestionnaire']}><Biens /></ProtectedRoute>} />
-      <Route path="/biens/:id/plan" element={<ProtectedRoute roles={['proprietaire','gestionnaire']}><PlanBien /></ProtectedRoute>} />
-      <Route path="/prestataires"   element={<ProtectedRoute roles={['proprietaire','gestionnaire']}><Prestataires /></ProtectedRoute>} />
-      <Route path="/catalogue"      element={<ProtectedRoute roles={['proprietaire','gestionnaire']}><Catalogue /></ProtectedRoute>} />
-      <Route path="/admin"          element={<ProtectedRoute roles={['gestionnaire','proprietaire']}><Admin /></ProtectedRoute>} />
-      <Route path="/demo"           element={<ProtectedRoute><Demo /></ProtectedRoute>} />
-      <Route path="*"               element={<Navigate to="/" replace />} />
+      <Route path="/connexion"       element={session ? <Navigate to="/" replace /> : <AuthPage />} />
+      <Route path="/"                element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+      <Route path="/incidents"       element={<ProtectedRoute><Incidents /></ProtectedRoute>} />
+      <Route path="/incidents/:id"   element={<ProtectedRoute><Incidents /></ProtectedRoute>} />
+      <Route path="/signaler"        element={<ProtectedRoute><SignalerIncident /></ProtectedRoute>} />
+      <Route path="/documents"       element={<ProtectedRoute><Documents /></ProtectedRoute>} />
+      <Route path="/messages"        element={<ProtectedRoute><Messages /></ProtectedRoute>} />
+      <Route path="/biens"           element={<ProtectedRoute roles={['proprietaire','gestionnaire']}><Biens /></ProtectedRoute>} />
+      <Route path="/biens/:id/plan"  element={<ProtectedRoute roles={['proprietaire','gestionnaire']}><PlanBien /></ProtectedRoute>} />
+      <Route path="/locataires"      element={<ProtectedRoute roles={['proprietaire','gestionnaire']}><Locataires /></ProtectedRoute>} />
+      <Route path="/prestataires"    element={<ProtectedRoute roles={['proprietaire','gestionnaire']}><Prestataires /></ProtectedRoute>} />
+      <Route path="/catalogue"       element={<ProtectedRoute roles={['proprietaire','gestionnaire']}><Catalogue /></ProtectedRoute>} />
+      <Route path="/admin"           element={<ProtectedRoute roles={['gestionnaire','proprietaire']}><Admin /></ProtectedRoute>} />
+      <Route path="/demo"            element={<ProtectedRoute><Demo /></ProtectedRoute>} />
+      <Route path="*"                element={<Navigate to="/" replace />} />
     </Routes>
   )
 }
