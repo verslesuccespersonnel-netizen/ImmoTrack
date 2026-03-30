@@ -1,10 +1,26 @@
 // src/lib/version.js — Changelog centralisé
 // À mettre à jour à chaque déploiement
 
-export const APP_VERSION = '1.3.0'
-export const APP_DATE = '2025-06-30'
+export const APP_VERSION = '1.4.0'
+export const APP_DATE = '2025-07-01'
 
 export const CHANGELOG = [
+  {
+    version: '1.4.0',
+    date: '2025-07-01',
+    label: 'Admin complet & Correctifs critiques',
+    changes: [
+      { type: 'new',  text: 'Admin : création locataire sans compte préalable (invitation)' },
+      { type: 'new',  text: 'Admin : garants / cautions (nom, lien, type, montant)' },
+      { type: 'new',  text: 'Admin : profils enrichis (2 téléphones, société, adresse, notes)' },
+      { type: 'new',  text: 'Admin : types de contrat (bail vide/meublé/commercial/colocation…)' },
+      { type: 'new',  text: 'Propriétaire peut déclarer des incidents depuis son interface' },
+      { type: 'fix',  text: 'Plan 2D : navigation corrigée (ne déconnecte plus)' },
+      { type: 'fix',  text: 'Inactivité : refresh automatique du token de session' },
+      { type: 'fix',  text: 'Rôle null au chargement ne redirige plus vers locataire' },
+      { type: 'fix',  text: 'Bouton déconnecter fiable en toutes circonstances' },
+    ]
+  },
   {
     version: '1.3.0',
     date: '2025-06-30',
