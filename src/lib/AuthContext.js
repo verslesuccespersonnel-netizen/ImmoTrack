@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState, useCallback } from 'react'
+import React, { createContext, useContext, useEffect, useState, useRef } from 'react'
 import { supabase } from './supabase'
 
 const AuthContext = createContext(null)
@@ -7,59 +7,65 @@ export function AuthProvider({ children }) {
   const [session, setSession]   = useState(null)
   const [profile, setProfile]   = useState(null)
   const [loading, setLoading]   = useState(true)
+  const mountedRef               = useRef(true)
+  const fetchingRef              = useRef(false)
 
-  const fetchProfile = useCallback(async (userId) => {
-    const { data, error } = await supabase
-      .from('profiles').select('*').eq('id', userId).single()
-    if (error) { console.error('Profile:', error.code, error.message); return null }
-    console.log('Profile OK:', data.role, data.nom)
-    return data
-  }, [])
+  async function fetchProfile(userId) {
+    if (fetchingRef.current) return
+    fetchingRef.current = true
+    try {
+      const { data, error } = await supabase
+        .from('profiles').select('*').eq('id', userId).single()
+      if (!mountedRef.current) return
+      if (error) { console.error('Profile error:', error.code); setProfile(null) }
+      else { console.log('Profile OK:', data.role); setProfile(data) }
+    } catch(e) {
+      console.error('Profile exception:', e)
+      if (mountedRef.current) setProfile(null)
+    } finally {
+      fetchingRef.current = false
+    }
+  }
 
   useEffect(() => {
-    let mounted = true
-    const kill = setTimeout(() => { if (mounted) setLoading(false) }, 10000)
+    mountedRef.current = true
+    // Timeout 8s absolu
+    const kill = setTimeout(() => {
+      if (mountedRef.current && loading) {
+        console.warn('Auth timeout - forcing unlock')
+        setLoading(false)
+      }
+    }, 8000)
 
-    // Unique source de vérité : onAuthStateChange
-    // Supabase déclenche INITIAL_SESSION dès le montage avec la session existante
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (!mounted) return
-        console.log('Auth:', event)
+      async (event, newSession) => {
+        if (!mountedRef.current) return
+        console.log('Auth event:', event)
 
-        if (event === 'SIGNED_OUT' || !session) {
-          setSession(null); setProfile(null); setLoading(false); return
+        if (event === 'SIGNED_OUT' || !newSession) {
+          setSession(null); setProfile(null); setLoading(false)
+          return
         }
-
-        // TOKEN_REFRESHED = session renouvelée silencieusement, on garde le profil
-        if (event === 'TOKEN_REFRESHED' && profile) {
-          setSession(session); return
+        if (event === 'TOKEN_REFRESHED') {
+          setSession(newSession); return
         }
-
-        setSession(session)
-
-        // Charger/recharger le profil
-        const p = await fetchProfile(session.user.id)
-        if (mounted) { setProfile(p); setLoading(false) }
+        // INITIAL_SESSION ou SIGNED_IN
+        setSession(newSession)
+        await fetchProfile(newSession.user.id)
+        if (mountedRef.current) setLoading(false)
       }
     )
 
-    // Activer le refresh automatique des tokens
-    supabase.auth.startAutoRefresh()
-
     return () => {
-      mounted = false
+      mountedRef.current = false
       clearTimeout(kill)
       subscription.unsubscribe()
-      supabase.auth.stopAutoRefresh()
     }
-  }, [fetchProfile])
+  }, [])
 
   async function reloadProfile() {
-    const { data: { session } } = await supabase.auth.getSession()
-    if (!session?.user) return
-    const p = await fetchProfile(session.user.id)
-    setProfile(p)
+    const { data: { session: s } } = await supabase.auth.getSession()
+    if (s?.user) await fetchProfile(s.user.id)
   }
 
   return (

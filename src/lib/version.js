@@ -1,10 +1,26 @@
 // src/lib/version.js — Changelog centralisé
 // À mettre à jour à chaque déploiement
 
-export const APP_VERSION = '1.4.0'
-export const APP_DATE = '2025-07-01'
+export const APP_VERSION = '1.5.0'
+export const APP_DATE = '2025-07-02'
 
 export const CHANGELOG = [
+  {
+    version: '1.5.0',
+    date: '2025-07-02',
+    label: 'Locataires & Plan v2',
+    changes: [
+      { type: 'new',  text: 'Page Locataires dédiée dans le menu (sous Mes biens)' },
+      { type: 'new',  text: 'Création locataire : contrat, loyer, dates, occupants, garants' },
+      { type: 'new',  text: 'Garants : lien, type de caution (Visale, bancaire…), montant' },
+      { type: 'new',  text: 'Plan 2D : zone de dessin doublée (28×20 cellules)' },
+      { type: 'new',  text: 'Plan 2D : pièce personnalisée, escalier, débarras, dépendance' },
+      { type: 'new',  text: 'Plan 2D : niveaux Jardin, Cour, Patio, Garage + niveau personnalisé' },
+      { type: 'fix',  text: 'Plan 2D : navigation retour ne déconnecte plus' },
+      { type: 'fix',  text: 'Inactivité : bouton déconnexion visible après 3s de chargement' },
+      { type: 'fix',  text: 'Création locataire : bug de sauvegarde corrigé' },
+    ]
+  },
   {
     version: '1.4.0',
     date: '2025-07-01',
