@@ -17,6 +17,7 @@ const NAV = {
   proprietaire: [
     { path:'/',             label:'Tableau de bord', icon:'📊' },
     { path:'/biens',        label:'Mes biens',       icon:'🏢' },
+    { path:'/locataires',   label:'Locataires',      icon:'👥' },
     { path:'/incidents',    label:'Incidents',       icon:'⚠️' },
     { path:'/prestataires', label:'Prestataires',    icon:'🔧' },
     { path:'/documents',    label:'Documents',       icon:'📄' },
@@ -28,6 +29,7 @@ const NAV = {
   gestionnaire: [
     { path:'/',             label:'Tableau de bord', icon:'📊' },
     { path:'/biens',        label:'Portefeuille',    icon:'🏢' },
+    { path:'/locataires',   label:'Locataires',      icon:'👥' },
     { path:'/incidents',    label:'Incidents',       icon:'⚠️' },
     { path:'/prestataires', label:'Prestataires',    icon:'🔧' },
     { path:'/documents',    label:'Documents',       icon:'📄' },
