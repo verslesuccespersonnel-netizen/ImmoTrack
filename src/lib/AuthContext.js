@@ -1,4 +1,4 @@
-// src/lib/AuthContext.js
+// src/lib/AuthContext.js — version définitive sans race condition
 import React, { createContext, useContext, useEffect, useState } from 'react'
 import { supabase } from './supabase'
 
@@ -10,76 +10,56 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    let cancelled = false
+    let active = true
 
-    // Timeout absolu : 10s max, jamais bloqué
+    // Timeout absolu 12s
     const kill = setTimeout(() => {
-      if (!cancelled) setLoading(false)
-    }, 10000)
+      if (active) { console.warn('Auth timeout'); setLoading(false) }
+    }, 12000)
 
-    async function fetchProfile(userId) {
-      // Essai 1
-      let { data } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .maybeSingle()
-
-      // Si pas encore créé par le trigger, on attend 1.5s et on retente
-      if (!data) {
-        await new Promise(r => setTimeout(r, 1500))
-        const r2 = await supabase
+    async function getProfile(userId) {
+      for (let i = 0; i < 3; i++) {
+        const { data, error } = await supabase
           .from('profiles')
           .select('*')
           .eq('id', userId)
           .maybeSingle()
-        data = r2.data
-      }
 
-      // On retourne ce qu'on a — sans jamais créer de profil par défaut
-      // (c'est le rôle du trigger SQL handle_new_user)
-      return data || null
+        if (error) { console.error('Profile error:', error); break }
+        if (data)  { return data }
+        // Profil pas encore créé, on attend
+        await new Promise(r => setTimeout(r, 800))
+      }
+      return null
     }
 
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      if (cancelled) return
-      setSession(session)
-      if (session?.user) {
-        const p = await fetchProfile(session.user.id)
-        if (!cancelled) setProfile(p)
-      }
-      if (!cancelled) setLoading(false)
-    }).catch(() => {
-      if (!cancelled) setLoading(false)
-    })
-
+    // UN SEUL point d'entrée : onAuthStateChange
+    // Il se déclenche immédiatement avec la session existante (INITIAL_SESSION)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        if (cancelled) return
+        if (!active) return
+        console.log('Auth event:', event, session?.user?.id)
+
         setSession(session)
 
-        if (event === 'SIGNED_OUT') {
+        if (!session?.user) {
           setProfile(null)
           setLoading(false)
           return
         }
 
-        if (session?.user) {
-          setLoading(true)
-          const p = await fetchProfile(session.user.id)
-          if (!cancelled) {
-            setProfile(p)
-            setLoading(false)
-          }
-        } else {
-          setProfile(null)
-          setLoading(false)
-        }
+        // Toujours lire le profil FRAIS depuis la base
+        const p = await getProfile(session.user.id)
+        if (!active) return
+
+        console.log('Profile loaded:', p)
+        setProfile(p)
+        setLoading(false)
       }
     )
 
     return () => {
-      cancelled = true
+      active = false
       clearTimeout(kill)
       subscription.unsubscribe()
     }
