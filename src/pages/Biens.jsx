@@ -1,11 +1,13 @@
 // src/pages/Biens.jsx
 import React, { useEffect, useState } from 'react'
 import { useAuth } from '../lib/AuthContext'
+import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import Layout from '../components/Layout'
 
 export default function Biens() {
   const { session } = useAuth()
+  const navigate = useNavigate()
   const [biens, setBiens]       = useState([])
   const [loading, setLoading]   = useState(true)
   const [modal, setModal]       = useState(null) // null | 'bien' | 'locataire' | 'piece'
@@ -182,7 +184,7 @@ export default function Biens() {
                 </div>
               </div>
               <div style={{ display: 'flex', gap: 8 }}>
-                <button style={{...css.btnSm, color:'#2B5EA7', borderColor:'#2B5EA7'}} onClick={() => window.location.href='/biens/'+b.id+'/plan'}>🗺️ Plan</button>
+                <button style={{...css.btnSm, color:'#2B5EA7', borderColor:'#2B5EA7'}} onClick={() => navigate('/biens/'+b.id+'/plan')}>🗺️ Plan</button>
                 <button style={css.btnSm} onClick={() => { openModal('bien', b); setForm({ adresse: b.adresse, ville: b.ville, code_postal: b.code_postal, type_bien: b.type_bien, surface_m2: b.surface_m2 }) }}>✏️ Modifier</button>
                 <button style={css.btnSmDanger} onClick={() => deleteBien(b.id)}>🗑️ Supprimer</button>
               </div>

@@ -23,18 +23,25 @@ export default function SignalerIncident() {
   })
   function set(k, v) { setForm(f => ({ ...f, [k]: v })) }
 
-  // Charge les biens du locataire
+  // Charge les biens selon le rôle
   useEffect(() => {
-    if (!session) return
-    supabase
-      .from('locations')
-      .select('bien:biens(id, adresse, ville)')
-      .eq('locataire_id', session.user.id)
-      .eq('statut', 'actif')
-      .then(({ data }) => {
-        if (data) setBiens(data.map(l => l.bien))
-      })
-  }, [session])
+    if (!session || !profile) return
+    if (profile.role === 'locataire') {
+      supabase
+        .from('locations')
+        .select('bien:biens(id, adresse, ville)')
+        .eq('locataire_id', session.user.id)
+        .eq('statut', 'actif')
+        .then(({ data }) => { if (data) setBiens(data.map(l => l.bien).filter(Boolean)) })
+    } else {
+      // Propriétaire / gestionnaire : tous leurs biens
+      supabase
+        .from('biens')
+        .select('id, adresse, ville')
+        .eq('proprietaire_id', session.user.id)
+        .then(({ data }) => { if (data) setBiens(data) })
+    }
+  }, [session, profile])
 
   // Charge les pièces quand un bien est sélectionné
   useEffect(() => {
