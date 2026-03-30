@@ -1,20 +1,21 @@
 import React from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './lib/AuthContext'
-import { supabaseConfigured } from './lib/supabase'
-import ErrorBoundary      from './components/ErrorBoundary'
-import AuthPage           from './pages/Auth'
-import Dashboard          from './pages/Dashboard'
-import Incidents          from './pages/Incidents'
-import SignalerIncident   from './pages/SignalerIncident'
-import Documents          from './pages/Documents'
-import Messages           from './pages/Messages'
-import Biens              from './pages/Biens'
-import Prestataires       from './pages/Prestataires'
-import Admin              from './pages/Admin'
-import Catalogue          from './pages/Catalogue'
-import PlanBien           from './pages/PlanBien'
+import { supabase, supabaseConfigured } from './lib/supabase'
+import ErrorBoundary    from './components/ErrorBoundary'
+import AuthPage         from './pages/Auth'
+import Dashboard        from './pages/Dashboard'
+import Incidents        from './pages/Incidents'
+import SignalerIncident from './pages/SignalerIncident'
+import Documents        from './pages/Documents'
+import Messages         from './pages/Messages'
+import Biens            from './pages/Biens'
+import Prestataires     from './pages/Prestataires'
+import Admin            from './pages/Admin'
+import Catalogue        from './pages/Catalogue'
+import PlanBien         from './pages/PlanBien'
 
+// ── Écran config manquante ───────────────────────────────
 function NotConfigured() {
   return (
     <div style={{ minHeight:'100vh', background:'#F7F5F0', display:'flex', alignItems:'center', justifyContent:'center', padding:24, fontFamily:'sans-serif' }}>
@@ -22,7 +23,7 @@ function NotConfigured() {
         <div style={{ fontFamily:'Georgia,serif', fontSize:24, marginBottom:16 }}>
           <span style={{ color:'#2D5A3D' }}>Immo</span><span style={{ color:'#C8813A' }}>Track</span>
         </div>
-        <h2 style={{ fontFamily:'Georgia,serif', fontSize:20, marginBottom:10 }}>🔑 Variables manquantes</h2>
+        <h2 style={{ fontFamily:'Georgia,serif', fontSize:20, marginBottom:12 }}>🔑 Variables manquantes</h2>
         <div style={{ background:'#1A1714', borderRadius:8, padding:'14px 16px', marginBottom:12, fontFamily:'monospace', fontSize:12, color:'#E8F2EB', lineHeight:2 }}>
           <div style={{ color:'#5F7A67' }}># Vercel → Settings → Environment Variables</div>
           <div><span style={{ color:'#C8813A' }}>REACT_APP_SUPABASE_URL</span> = https://xxxx.supabase.co</div>
@@ -36,28 +37,32 @@ function NotConfigured() {
   )
 }
 
-// Écran de chargement avec bouton déconnexion de secours
-function LoadingScreen() {
-  const { supabase: sb } = require('./lib/supabase')
-  async function forceLogout() {
-    try { await sb.auth.signOut() } catch(e) {}
-    window.location.href = '/connexion'
+// ── Écran chargement avec déconnexion de secours ─────────
+function LoadingFallback() {
+  function logout() {
+    supabase.auth.signOut().finally(() => {
+      window.location.replace('/connexion')
+    })
   }
   return (
-    <div style={{ display:'flex', alignItems:'center', justifyContent:'center', minHeight:'100vh', flexDirection:'column', gap:16, background:'#F7F5F0', fontFamily:'sans-serif' }}>
-      <div style={{ fontFamily:'Georgia,serif', fontSize:22 }}>
+    <div style={{ display:'flex', alignItems:'center', justifyContent:'center', minHeight:'100vh', flexDirection:'column', gap:20, background:'#F7F5F0', fontFamily:'sans-serif' }}>
+      <div style={{ fontFamily:'Georgia,serif', fontSize:24 }}>
         <span style={{ color:'#2D5A3D' }}>Immo</span><span style={{ color:'#C8813A' }}>Track</span>
       </div>
-      <div style={{ width:32, height:32, borderRadius:'50%', border:'3px solid #E8F2EB', borderTopColor:'#2D5A3D', animation:'spin 0.8s linear infinite' }}/>
-      <button
-        onClick={forceLogout}
-        style={{ marginTop:8, padding:'8px 16px', background:'transparent', border:'1px solid rgba(0,0,0,0.15)', borderRadius:8, cursor:'pointer', fontFamily:'sans-serif', fontSize:12, color:'#6B6560' }}>
-        Se déconnecter
+      <div style={{ width:36, height:36, borderRadius:'50%', border:'3px solid #E8F2EB', borderTopColor:'#2D5A3D', animation:'spin 0.8s linear infinite' }}/>
+      <div style={{ fontSize:13, color:'#9E9890' }}>Chargement de votre espace…</div>
+      <button onClick={logout} style={{
+        marginTop:8, padding:'9px 20px', background:'#fff',
+        border:'1px solid rgba(0,0,0,0.15)', borderRadius:8,
+        cursor:'pointer', fontFamily:'sans-serif', fontSize:13, color:'#6B6560'
+      }}>
+        🚪 Se déconnecter
       </button>
     </div>
   )
 }
 
+// ── Route protégée ───────────────────────────────────────
 function ProtectedRoute({ children, roles }) {
   const { session, profile, loading } = useAuth()
   if (loading) return <LoadingFallback />
@@ -66,26 +71,7 @@ function ProtectedRoute({ children, roles }) {
   return children
 }
 
-function LoadingFallback() {
-  async function logout() {
-    const { supabase } = await import('./lib/supabase')
-    try { await supabase.auth.signOut() } catch(e) {}
-    window.location.href = '/connexion'
-  }
-  return (
-    <div style={{ display:'flex', alignItems:'center', justifyContent:'center', minHeight:'100vh', flexDirection:'column', gap:16, background:'#F7F5F0', fontFamily:'sans-serif' }}>
-      <div style={{ fontFamily:'Georgia,serif', fontSize:22 }}>
-        <span style={{ color:'#2D5A3D' }}>Immo</span><span style={{ color:'#C8813A' }}>Track</span>
-      </div>
-      <div style={{ width:32, height:32, borderRadius:'50%', border:'3px solid #E8F2EB', borderTopColor:'#2D5A3D', animation:'spin 0.8s linear infinite' }}/>
-      <button onClick={logout}
-        style={{ marginTop:8, padding:'8px 16px', background:'transparent', border:'1px solid rgba(0,0,0,0.15)', borderRadius:8, cursor:'pointer', fontFamily:'sans-serif', fontSize:12, color:'#6B6560' }}>
-        Se déconnecter
-      </button>
-    </div>
-  )
-}
-
+// ── Routes ───────────────────────────────────────────────
 function AppRoutes() {
   const { session } = useAuth()
   return (
@@ -107,6 +93,7 @@ function AppRoutes() {
   )
 }
 
+// ── Root ─────────────────────────────────────────────────
 export default function App() {
   if (!supabaseConfigured) return <NotConfigured />
   return (
