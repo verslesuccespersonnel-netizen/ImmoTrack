@@ -63,8 +63,12 @@ export default function Layout({ children }) {
 
   async function signOut() {
     setMenu(false)
-    await supabase.auth.signOut().catch(()=>{})
-    window.location.href = '/connexion'
+    // Vider le cache localStorage Supabase
+    Object.keys(localStorage).forEach(k => {
+      if (k.startsWith('sb-') || k.includes('supabase')) localStorage.removeItem(k)
+    })
+    try { await supabase.auth.signOut() } catch(e) {}
+    window.location.replace('/connexion')
   }
 
   return (
