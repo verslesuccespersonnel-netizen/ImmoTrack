@@ -70,12 +70,12 @@ export default function Layout({ children }) {
   function signOut() {
     setMenu(false)
     try {
-      const keys = Object.keys(localStorage).filter(k =>
-        k.startsWith('sb-') || k.includes('supabase') || k.includes('auth'))
-      keys.forEach(k => localStorage.removeItem(k))
+      Object.keys(localStorage)
+        .filter(k => k.startsWith('sb-') || k.includes('supabase'))
+        .forEach(k => localStorage.removeItem(k))
       sessionStorage.clear()
       supabase.auth.signOut().catch(() => {})
-    } catch(e) {}
+    } catch {}
     window.location.replace('/connexion')
   }
 
