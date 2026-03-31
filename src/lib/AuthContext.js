@@ -1,3 +1,5 @@
+// AuthContext.js — architecture séparée : getSession() pour le démarrage,
+// onAuthStateChange uniquement pour les changements réels
 import React, { createContext, useContext, useEffect, useState, useRef } from 'react'
 import { supabase } from './supabase'
 
@@ -7,7 +9,6 @@ export function AuthProvider({ children }) {
   const [session, setSession] = useState(null)
   const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
-  const doneRef = useRef(false)
   const mountedRef = useRef(true)
 
   async function fetchProfile(userId) {
@@ -18,76 +19,90 @@ export function AuthProvider({ children }) {
     } catch { return null }
   }
 
-  function finalize(sess, prof) {
-    if (!mountedRef.current || doneRef.current) return
-    doneRef.current = true
-    setSession(sess)
-    setProfile(prof)
-    setLoading(false)
-  }
-
   useEffect(() => {
     mountedRef.current = true
-    doneRef.current = false
 
-    // Timeout absolu 6s
-    const kill = setTimeout(() => {
-      if (!doneRef.current) {
-        console.warn('Auth timeout — forcing unlock')
-        finalize(null, null)
-      }
-    }, 6000)
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, sess) => {
-        if (!mountedRef.current) return
-        console.log('Auth:', event)
-
-        if (event === 'SIGNED_OUT' || !sess) {
-          finalize(null, null); return
-        }
-        if (event === 'TOKEN_REFRESHED') {
-          // Session rafraîchie silencieusement — juste mettre à jour session
-          setSession(sess); return
-        }
-        // INITIAL_SESSION ou SIGNED_IN — charger le profil
-        const p = await fetchProfile(sess.user.id)
-        if (mountedRef.current) finalize(sess, p)
-      }
-    )
-
-    // Retour sur l'onglet → vérifier la session
-    async function onVisible() {
-      if (document.visibilityState !== 'visible') return
+    // ── ÉTAPE 1 : Chargement initial via getSession() ────
+    // getSession() est synchrone (lit le localStorage), ne dépend
+    // PAS du WebSocket → toujours fiable même si l'onglet revient
+    async function init() {
       try {
-        const { data: { session: s }, error } = await supabase.auth.getSession()
-        if (error || !s) {
-          // Session réellement perdue
-          if (mountedRef.current) {
-            setSession(null); setProfile(null)
-            setLoading(false); doneRef.current = true
-          }
+        const { data: { session: s } } = await supabase.auth.getSession()
+        if (!mountedRef.current) return
+        if (s?.user) {
+          setSession(s)
+          const p = await fetchProfile(s.user.id)
+          if (mountedRef.current) setProfile(p)
+        } else {
+          setSession(null)
+          setProfile(null)
         }
-        // Si session valide, TOKEN_REFRESHED se déclenchera si besoin
       } catch(e) {
-        console.warn('onVisible check failed:', e.message)
+        console.error('Init error:', e)
+      } finally {
+        if (mountedRef.current) setLoading(false)
       }
     }
 
-    // Refresh périodique pour éviter l'expiration silencieuse
-    const interval = setInterval(async () => {
+    init()
+
+    // ── ÉTAPE 2 : Listener pour les vrais changements ────
+    // SIGNED_IN / SIGNED_OUT / TOKEN_REFRESHED uniquement
+    // On ne l'utilise PLUS pour mettre à jour loading
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, s) => {
+        if (!mountedRef.current) return
+        console.log('Auth event:', event)
+
+        if (event === 'SIGNED_OUT') {
+          setSession(null); setProfile(null); return
+        }
+        if (event === 'TOKEN_REFRESHED' && s) {
+          setSession(s); return
+        }
+        if ((event === 'SIGNED_IN') && s?.user) {
+          setSession(s)
+          const p = await fetchProfile(s.user.id)
+          if (mountedRef.current) setProfile(p)
+        }
+      }
+    )
+
+    // ── ÉTAPE 3 : Retour sur l'onglet ────────────────────
+    // On relit getSession() — garanti de lire le localStorage à jour
+    async function onVisible() {
+      if (document.visibilityState !== 'visible') return
       if (!mountedRef.current) return
-      try { await supabase.auth.getSession() } catch {}
-    }, 2 * 60 * 1000) // toutes les 2 minutes
+      try {
+        const { data: { session: s } } = await supabase.auth.getSession()
+        if (!mountedRef.current) return
+        if (!s) {
+          // Session vraiment expirée
+          setSession(null); setProfile(null)
+          setLoading(false)
+        } else if (!session) {
+          // Session revenue après expiration temp
+          setSession(s)
+          const p = await fetchProfile(s.user.id)
+          if (mountedRef.current) { setProfile(p); setLoading(false) }
+        }
+      } catch(e) {
+        console.warn('visibilitychange check failed:', e.message)
+      }
+    }
 
     document.addEventListener('visibilitychange', onVisible)
 
+    // Refresh léger toutes les 3 min pour maintenir le token
+    const interval = setInterval(() => {
+      if (mountedRef.current) supabase.auth.getSession().catch(() => {})
+    }, 3 * 60 * 1000)
+
     return () => {
       mountedRef.current = false
-      clearTimeout(kill)
-      clearInterval(interval)
       subscription.unsubscribe()
       document.removeEventListener('visibilitychange', onVisible)
+      clearInterval(interval)
     }
   }, [])
 
