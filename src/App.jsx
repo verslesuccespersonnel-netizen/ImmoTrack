@@ -35,38 +35,47 @@ function NotConfigured() {
   )
 }
 
+// Déconnexion dure — fonctionne même si React est gelé
+function hardLogout(e) {
+  if (e) e.preventDefault()
+  try {
+    Object.keys(localStorage)
+      .filter(k => k.startsWith('sb-') || k.includes('supabase'))
+      .forEach(k => localStorage.removeItem(k))
+    sessionStorage.clear()
+    supabase.auth.signOut().catch(() => {})
+  } catch {}
+  // window.location.replace contourne React Router
+  window.location.replace('/connexion')
+}
+
 function LoadingScreen() {
-  const [waited, setWaited] = React.useState(false)
-  React.useEffect(() => { const t = setTimeout(() => setWaited(true), 3000); return () => clearTimeout(t) }, [])
-
-  async function logout() {
-    try {
-      Object.keys(localStorage).forEach(k => {
-        if (k.startsWith('sb-') || k.includes('supabase')) localStorage.removeItem(k)
-      })
-      sessionStorage.clear()
-      await supabase.auth.signOut()
-    } catch(e) { console.error(e) }
-    window.location.replace('/connexion')
-  }
-
+  const [show, setShow] = React.useState(false)
+  React.useEffect(() => { const t = setTimeout(() => setShow(true), 2500); return () => clearTimeout(t) }, [])
   return (
     <div style={{ display:'flex', alignItems:'center', justifyContent:'center', minHeight:'100vh',
-      flexDirection:'column', gap:20, background:'#F7F5F0', fontFamily:'sans-serif' }}>
+      flexDirection:'column', gap:18, background:'#F7F5F0', fontFamily:'sans-serif' }}>
       <div style={{ fontFamily:'Georgia,serif', fontSize:24 }}>
         <span style={{ color:'#2D5A3D' }}>Immo</span><span style={{ color:'#C8813A' }}>Track</span>
       </div>
       <div style={{ width:36, height:36, borderRadius:'50%', border:'3px solid #E8F2EB',
         borderTopColor:'#2D5A3D', animation:'spin 0.8s linear infinite' }}/>
-      {waited && (
-        <button onClick={logout} style={{
-          padding:'10px 24px', background:'#fff',
-          border:'1px solid rgba(184,50,50,0.35)', borderRadius:8, cursor:'pointer',
-          fontFamily:'sans-serif', fontSize:13, color:'#B83232', fontWeight:600,
-          boxShadow:'0 2px 8px rgba(0,0,0,0.08)'
-        }}>
-          🚪 Se déconnecter
-        </button>
+      {show && (
+        <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:8 }}>
+          <div style={{ fontSize:12, color:'#9E9890' }}>Chargement trop long ?</div>
+          {/* <a> et non <button> : fonctionne même si JS est bloqué */}
+          <a href="/connexion" onClick={hardLogout}
+            style={{ padding:'10px 24px', background:'#fff',
+              border:'1px solid rgba(184,50,50,0.35)', borderRadius:8,
+              cursor:'pointer', fontSize:13, color:'#B83232', fontWeight:600,
+              textDecoration:'none', display:'inline-block' }}>
+            🚪 Se déconnecter
+          </a>
+          <a href="/connexion"
+            style={{ fontSize:11, color:'#9E9890', textDecoration:'underline', cursor:'pointer' }}>
+            Aller directement à la connexion
+          </a>
+        </div>
       )}
     </div>
   )
