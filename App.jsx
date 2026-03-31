@@ -1,5 +1,5 @@
 import React from 'react'
-import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './lib/AuthContext'
 import { supabase, supabaseConfigured } from './lib/supabase'
 import ErrorBoundary    from './components/ErrorBoundary'
@@ -35,28 +35,23 @@ function NotConfigured() {
   )
 }
 
-// Déconnexion garantie — fonctionne même si l'app est bloquée
-function hardLogout() {
+// Déconnexion dure — fonctionne même si React est gelé
+function hardLogout(e) {
+  if (e) e.preventDefault()
   try {
-    // Vider tout le stockage lié à Supabase
-    const keys = Object.keys(localStorage).filter(k =>
-      k.startsWith('sb-') || k.includes('supabase') || k.includes('auth'))
-    keys.forEach(k => localStorage.removeItem(k))
+    Object.keys(localStorage)
+      .filter(k => k.startsWith('sb-') || k.includes('supabase'))
+      .forEach(k => localStorage.removeItem(k))
     sessionStorage.clear()
-    // Appel Supabase non bloquant
     supabase.auth.signOut().catch(() => {})
-  } catch(e) {}
-  // Redirection immédiate sans attendre
+  } catch {}
+  // window.location.replace contourne React Router
   window.location.replace('/connexion')
 }
 
 function LoadingScreen() {
-  const [showBtn, setShowBtn] = React.useState(false)
-  React.useEffect(() => {
-    const t = setTimeout(() => setShowBtn(true), 2500)
-    return () => clearTimeout(t)
-  }, [])
-
+  const [show, setShow] = React.useState(false)
+  React.useEffect(() => { const t = setTimeout(() => setShow(true), 2500); return () => clearTimeout(t) }, [])
   return (
     <div style={{ display:'flex', alignItems:'center', justifyContent:'center', minHeight:'100vh',
       flexDirection:'column', gap:18, background:'#F7F5F0', fontFamily:'sans-serif' }}>
@@ -65,20 +60,20 @@ function LoadingScreen() {
       </div>
       <div style={{ width:36, height:36, borderRadius:'50%', border:'3px solid #E8F2EB',
         borderTopColor:'#2D5A3D', animation:'spin 0.8s linear infinite' }}/>
-      {showBtn && (
+      {show && (
         <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:8 }}>
           <div style={{ fontSize:12, color:'#9E9890' }}>Chargement trop long ?</div>
-          {/* Bouton utilisant href directement — fonctionne même si React est bloqué */}
-          <a href="/connexion" onClick={e => { e.preventDefault(); hardLogout() }}
-            style={{ padding:'10px 24px', background:'#fff', border:'1px solid rgba(184,50,50,0.35)',
-              borderRadius:8, cursor:'pointer', fontFamily:'sans-serif', fontSize:13,
-              color:'#B83232', fontWeight:600, textDecoration:'none', display:'block',
-              boxShadow:'0 2px 8px rgba(0,0,0,0.08)' }}>
+          {/* <a> et non <button> : fonctionne même si JS est bloqué */}
+          <a href="/connexion" onClick={hardLogout}
+            style={{ padding:'10px 24px', background:'#fff',
+              border:'1px solid rgba(184,50,50,0.35)', borderRadius:8,
+              cursor:'pointer', fontSize:13, color:'#B83232', fontWeight:600,
+              textDecoration:'none', display:'inline-block' }}>
             🚪 Se déconnecter
           </a>
-          <a href="/connexion" onClick={e => { e.preventDefault(); window.location.replace('/connexion') }}
-            style={{ fontSize:12, color:'#9E9890', textDecoration:'underline', cursor:'pointer' }}>
-            Aller à la page de connexion
+          <a href="/connexion"
+            style={{ fontSize:11, color:'#9E9890', textDecoration:'underline', cursor:'pointer' }}>
+            Aller directement à la connexion
           </a>
         </div>
       )}
