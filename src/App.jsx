@@ -19,12 +19,14 @@ import Locataires       from './pages/Locataires'
 
 function NotConfigured() {
   return (
-    <div style={{ minHeight:'100vh', background:'#F7F5F0', display:'flex', alignItems:'center', justifyContent:'center', padding:24, fontFamily:'sans-serif' }}>
+    <div style={{ minHeight:'100vh', background:'#F7F5F0', display:'flex',
+      alignItems:'center', justifyContent:'center', padding:24, fontFamily:'sans-serif' }}>
       <div style={{ background:'#fff', borderRadius:16, padding:'32px', maxWidth:440, width:'100%' }}>
         <div style={{ fontFamily:'Georgia,serif', fontSize:22, marginBottom:14 }}>
           <span style={{ color:'#2D5A3D' }}>Immo</span><span style={{ color:'#C8813A' }}>Track</span>
         </div>
-        <code style={{ display:'block', background:'#1A1714', color:'#7EB89A', padding:'12px', borderRadius:8, fontSize:12, lineHeight:1.8, marginBottom:10 }}>
+        <code style={{ display:'block', background:'#1A1714', color:'#7EB89A',
+          padding:'12px', borderRadius:8, fontSize:12, lineHeight:1.8, marginBottom:10 }}>
           REACT_APP_SUPABASE_URL = ...<br/>REACT_APP_SUPABASE_ANON_KEY = ...
         </code>
         <div style={{ background:'#E8F2EB', padding:'10px 14px', borderRadius:8, fontSize:13, color:'#2D5A3D' }}>
@@ -35,45 +37,59 @@ function NotConfigured() {
   )
 }
 
-// Déconnexion dure — fonctionne même si React est gelé
+// Déconnexion absolue — ne dépend PAS de React
+// Fonctionne même si l'app est complètement gelée
 function hardLogout(e) {
-  if (e) e.preventDefault()
+  if (e && e.preventDefault) e.preventDefault()
+  // 1. Vider le localStorage Supabase
   try {
     Object.keys(localStorage)
-      .filter(k => k.startsWith('sb-') || k.includes('supabase'))
+      .filter(k => k.startsWith('sb-') || k.includes('supabase') || k.includes('-auth-'))
       .forEach(k => localStorage.removeItem(k))
     sessionStorage.clear()
-    supabase.auth.signOut().catch(() => {})
   } catch {}
-  // window.location.replace contourne React Router
+  // 2. Appel signOut non-bloquant
+  try { supabase.auth.signOut().catch(() => {}) } catch {}
+  // 3. Redirection native — bypasse React Router
   window.location.replace('/connexion')
 }
 
+// Écran de chargement — bouton de déconnexion via <a> natif
 function LoadingScreen() {
   const [show, setShow] = React.useState(false)
-  React.useEffect(() => { const t = setTimeout(() => setShow(true), 2500); return () => clearTimeout(t) }, [])
+  React.useEffect(() => {
+    const t = setTimeout(() => setShow(true), 2000)
+    return () => clearTimeout(t)
+  }, [])
+
   return (
-    <div style={{ display:'flex', alignItems:'center', justifyContent:'center', minHeight:'100vh',
-      flexDirection:'column', gap:18, background:'#F7F5F0', fontFamily:'sans-serif' }}>
+    <div style={{ display:'flex', alignItems:'center', justifyContent:'center',
+      minHeight:'100vh', flexDirection:'column', gap:20, background:'#F7F5F0', fontFamily:'sans-serif' }}>
       <div style={{ fontFamily:'Georgia,serif', fontSize:24 }}>
         <span style={{ color:'#2D5A3D' }}>Immo</span><span style={{ color:'#C8813A' }}>Track</span>
       </div>
       <div style={{ width:36, height:36, borderRadius:'50%', border:'3px solid #E8F2EB',
         borderTopColor:'#2D5A3D', animation:'spin 0.8s linear infinite' }}/>
       {show && (
-        <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:8 }}>
-          <div style={{ fontSize:12, color:'#9E9890' }}>Chargement trop long ?</div>
-          {/* <a> et non <button> : fonctionne même si JS est bloqué */}
-          <a href="/connexion" onClick={hardLogout}
-            style={{ padding:'10px 24px', background:'#fff',
-              border:'1px solid rgba(184,50,50,0.35)', borderRadius:8,
-              cursor:'pointer', fontSize:13, color:'#B83232', fontWeight:600,
-              textDecoration:'none', display:'inline-block' }}>
+        <div style={{ textAlign:'center' }}>
+          <div style={{ fontSize:12, color:'#9E9890', marginBottom:10 }}>
+            Trop long ? Cliquez ci-dessous.
+          </div>
+          {/*
+            IMPORTANT : c'est un <a href> et non un <button>
+            Le navigateur suit ce lien même si JavaScript est gelé.
+            onClick appelle hardLogout pour vider le storage d'abord.
+          */}
+          <a
+            href="/connexion"
+            onClick={hardLogout}
+            style={{
+              display:'inline-block', padding:'11px 28px',
+              background:'#B83232', color:'white', borderRadius:8,
+              fontFamily:'sans-serif', fontSize:14, fontWeight:600,
+              textDecoration:'none', cursor:'pointer',
+            }}>
             🚪 Se déconnecter
-          </a>
-          <a href="/connexion"
-            style={{ fontSize:11, color:'#9E9890', textDecoration:'underline', cursor:'pointer' }}>
-            Aller directement à la connexion
           </a>
         </div>
       )}
