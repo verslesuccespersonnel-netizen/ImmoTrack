@@ -1,3 +1,4 @@
+// src/lib/AuthContext.js — Version robuste avec gestion visibilité onglet
 import React, { createContext, useContext, useEffect, useState, useRef } from 'react'
 import { supabase } from './supabase'
 
@@ -7,65 +8,120 @@ export function AuthProvider({ children }) {
   const [session, setSession]   = useState(null)
   const [profile, setProfile]   = useState(null)
   const [loading, setLoading]   = useState(true)
-  const mountedRef               = useRef(true)
-  const fetchingRef              = useRef(false)
+  const activeRef               = useRef(true)
+  const loadingRef              = useRef(true)
 
   async function fetchProfile(userId) {
-    if (fetchingRef.current) return
-    fetchingRef.current = true
     try {
       const { data, error } = await supabase
         .from('profiles').select('*').eq('id', userId).single()
-      if (!mountedRef.current) return
-      if (error) { console.error('Profile error:', error.code); setProfile(null) }
-      else { console.log('Profile OK:', data.role); setProfile(data) }
+      if (!activeRef.current) return null
+      if (error) { console.error('Profile:', error.code); return null }
+      console.log('Profile OK:', data.role)
+      return data
     } catch(e) {
-      console.error('Profile exception:', e)
-      if (mountedRef.current) setProfile(null)
-    } finally {
-      fetchingRef.current = false
+      console.error('fetchProfile exception:', e)
+      return null
+    }
+  }
+
+  async function refreshSession() {
+    try {
+      const { data: { session }, error } = await supabase.auth.getSession()
+      if (error || !session) return false
+      // Forcer un refresh du token si proche de l'expiration
+      const exp = session.expires_at
+      const now  = Math.floor(Date.now() / 1000)
+      if (exp - now < 300) { // < 5 min restantes
+        await supabase.auth.refreshSession()
+      }
+      return true
+    } catch(e) {
+      console.error('refreshSession error:', e)
+      return false
     }
   }
 
   useEffect(() => {
-    mountedRef.current = true
-    // Timeout 8s absolu
+    activeRef.current = true
+    loadingRef.current = true
+
+    // Timeout absolu 8s
     const kill = setTimeout(() => {
-      if (mountedRef.current && loading) {
-        console.warn('Auth timeout - forcing unlock')
+      if (loadingRef.current && activeRef.current) {
+        console.warn('Auth timeout')
         setLoading(false)
+        loadingRef.current = false
       }
     }, 8000)
 
+    // Unique source de vérité
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, newSession) => {
-        if (!mountedRef.current) return
-        console.log('Auth event:', event)
+        if (!activeRef.current) return
+        console.log('Auth:', event)
 
         if (event === 'SIGNED_OUT' || !newSession) {
-          setSession(null); setProfile(null); setLoading(false)
+          setSession(null)
+          setProfile(null)
+          setLoading(false)
+          loadingRef.current = false
           return
         }
         if (event === 'TOKEN_REFRESHED') {
-          setSession(newSession); return
+          setSession(newSession)
+          return // Profil déjà chargé
         }
-        // INITIAL_SESSION ou SIGNED_IN
+
         setSession(newSession)
-        await fetchProfile(newSession.user.id)
-        if (mountedRef.current) setLoading(false)
+        const p = await fetchProfile(newSession.user.id)
+        if (activeRef.current) {
+          setProfile(p)
+          setLoading(false)
+          loadingRef.current = false
+        }
       }
     )
 
+    // ── Gestion changement de visibilité de l'onglet ─────
+    // Quand l'utilisateur revient sur l'onglet, on vérifie
+    // et rafraîchit la session silencieusement
+    async function onVisibilityChange() {
+      if (document.visibilityState !== 'visible') return
+      console.log('Tab visible — checking session')
+      const ok = await refreshSession()
+      if (!ok) {
+        // Session vraiment expirée → déconnecter proprement
+        console.warn('Session expired on tab return')
+        setSession(null)
+        setProfile(null)
+        setLoading(false)
+        loadingRef.current = false
+      }
+    }
+
+    document.addEventListener('visibilitychange', onVisibilityChange)
+
+    // Vérification périodique toutes les 4 minutes
+    const interval = setInterval(async () => {
+      if (!activeRef.current || loadingRef.current) return
+      await refreshSession()
+    }, 4 * 60 * 1000)
+
     return () => {
-      mountedRef.current = false
+      activeRef.current = false
       clearTimeout(kill)
+      clearInterval(interval)
       subscription.unsubscribe()
+      document.removeEventListener('visibilitychange', onVisibilityChange)
     }
   }, [])
 
   async function reloadProfile() {
     const { data: { session: s } } = await supabase.auth.getSession()
-    if (s?.user) await fetchProfile(s.user.id)
+    if (!s?.user) return
+    const p = await fetchProfile(s.user.id)
+    setProfile(p)
   }
 
   return (

@@ -1,10 +1,24 @@
 // src/lib/version.js — Changelog centralisé
 // À mettre à jour à chaque déploiement
 
-export const APP_VERSION = '1.5.0'
-export const APP_DATE = '2025-07-02'
+export const APP_VERSION = '1.6.0'
+export const APP_DATE = '2025-07-03'
 
 export const CHANGELOG = [
+  {
+    version: '1.6.0',
+    date: '2025-07-03',
+    label: 'Équipements dans le plan & fix session',
+    changes: [
+      { type: 'new',  text: 'Plan 2D : onglet Équipements — 50+ équipements pré-définis (volets, robinets, prises…)' },
+      { type: 'new',  text: 'Plan 2D : placer les équipements sur la grille et les associer à une pièce' },
+      { type: 'new',  text: 'Plan 2D : équipement personnalisé avec icône et notes' },
+      { type: 'new',  text: 'Plan 2D : le nombre d'équipements s'affiche dans chaque pièce' },
+      { type: 'fix',  text: 'SESSION : gestion changement d'onglet — refresh automatique au retour' },
+      { type: 'fix',  text: 'SESSION : vérification périodique toutes les 4 minutes' },
+      { type: 'fix',  text: 'SESSION : bouton déconnexion via lien <a> — fonctionne même si React est bloqué' },
+    ]
+  },
   {
     version: '1.5.0',
     date: '2025-07-02',
