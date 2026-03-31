@@ -67,13 +67,15 @@ export default function Layout({ children }) {
       .then(({ count }) => setUnread(count || 0))
   }, [session, location.pathname])
 
-  async function signOut() {
+  function signOut() {
     setMenu(false)
-    Object.keys(localStorage).forEach(k => {
-      if (k.startsWith('sb-') || k.includes('supabase')) localStorage.removeItem(k)
-    })
-    sessionStorage.clear()
-    try { await supabase.auth.signOut() } catch(e) {}
+    try {
+      const keys = Object.keys(localStorage).filter(k =>
+        k.startsWith('sb-') || k.includes('supabase') || k.includes('auth'))
+      keys.forEach(k => localStorage.removeItem(k))
+      sessionStorage.clear()
+      supabase.auth.signOut().catch(() => {})
+    } catch(e) {}
     window.location.replace('/connexion')
   }
 
