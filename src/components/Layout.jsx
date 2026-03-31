@@ -67,11 +67,11 @@ export default function Layout({ children }) {
       .then(({ count }) => setUnread(count || 0))
   }, [session, location.pathname])
 
-  function signOut() {
+    function signOut() {
     setMenu(false)
     try {
       Object.keys(localStorage)
-        .filter(k => k.startsWith('sb-') || k.includes('supabase'))
+        .filter(k => k.startsWith('sb-') || k.includes('supabase') || k.includes('-auth-'))
         .forEach(k => localStorage.removeItem(k))
       sessionStorage.clear()
       supabase.auth.signOut().catch(() => {})
