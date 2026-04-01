@@ -1,6 +1,7 @@
 // src/pages/Biens.jsx
 import React, { useEffect, useState } from 'react'
 import { useAuth } from '../lib/AuthContext'
+import { usePageData } from '../lib/usePageData'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import Layout from '../components/Layout'
@@ -16,253 +17,28 @@ export default function Biens() {
   const [saving, setSaving]     = useState(false)
   const [error, setError]       = useState('')
 
-  useEffect(() => { load() }, [session])
-
-  async function load() {
-    if (!session) return
-    setLoading(true)
-    const { data } = await supabase
+  const { data: biensData, loading, reload: load } = usePageData(async () => {
+    if (!session) return []
+    try { window.__immotrack_reset_stuck && window.__immotrack_reset_stuck() } catch {}
+    const { data, error } = await supabase
       .from('biens')
-      .select(`
+      .select(\`
         *,
         locations(
           id, loyer_mensuel, date_debut, date_fin, statut,
           locataire:profiles(id, nom, prenom, telephone)
         ),
         pieces(id, nom, ordre, elements(id, nom, type))
-      `)
+      \`)
       .eq('proprietaire_id', session.user.id)
       .order('created_at', { ascending: false })
-    setBiens(data || [])
-    setLoading(false)
-  }
+    if (error) throw error
+    return data || []
+  }, [session?.user?.id])
 
-  function set(k, v) { setForm(f => ({ ...f, [k]: v })) }
-
-  function openModal(type, bien = null) {
-    setSelected(bien)
-    setForm({})
-    setError('')
-    setModal(type)
-  }
-
-  async function saveBien() {
-    if (!form.adresse || !form.ville || !form.type_bien) {
-      setError('Adresse, ville et type sont obligatoires.'); return
-    }
-    setSaving(true); setError('')
-    try {
-      if (selected) {
-        await supabase.from('biens').update({
-          adresse: form.adresse, ville: form.ville,
-          code_postal: form.code_postal || '',
-          type_bien: form.type_bien, surface_m2: form.surface_m2 || null
-        }).eq('id', selected.id)
-      } else {
-        await supabase.from('biens').insert({
-          proprietaire_id: session.user.id,
-          adresse: form.adresse, ville: form.ville,
-          code_postal: form.code_postal || '',
-          type_bien: form.type_bien, surface_m2: form.surface_m2 || null
-        })
-      }
-      setModal(null); await load()
-    } catch(e) { setError(e.message) }
-    finally { setSaving(false) }
-  }
-
-  async function deleteBien(id) {
-    if (!window.confirm('Supprimer ce bien et toutes ses données ?')) return
-    await supabase.from('biens').delete().eq('id', id)
-    await load()
-  }
-
-  async function saveLocation() {
-    if (!form.loyer || !form.date_debut) {
-      setError('Loyer et date de début obligatoires.'); return
-    }
-    setSaving(true); setError('')
-    try {
-      // Chercher le locataire par email
-      let locataireId = null
-      if (form.locataire_email) {
-        const { data: u } = await supabase
-          .from('profiles')
-          .select('id')
-          .eq('id', (await supabase.auth.admin?.getUserByEmail?.(form.locataire_email))?.data?.user?.id || '00000000-0000-0000-0000-000000000000')
-          .single()
-        // Alternative : chercher dans profiles via une vue ou function
-        const { data: byEmail } = await supabase
-          .rpc('get_user_id_by_email', { email: form.locataire_email })
-          .single()
-        locataireId = byEmail || null
-      }
-
-      // Désactiver les locations actives existantes
-      await supabase.from('locations')
-        .update({ statut: 'termine' })
-        .eq('bien_id', selected.id)
-        .eq('statut', 'actif')
-
-      await supabase.from('locations').insert({
-        bien_id: selected.id,
-        locataire_id: locataireId,
-        loyer_mensuel: Number(form.loyer),
-        date_debut: form.date_debut,
-        date_fin: form.date_fin || null,
-        statut: 'actif'
-      })
-      setModal(null); await load()
-    } catch(e) { setError(e.message) }
-    finally { setSaving(false) }
-  }
-
-  async function savePiece() {
-    if (!form.nom) { setError('Nom obligatoire.'); return }
-    setSaving(true); setError('')
-    try {
-      await supabase.from('pieces').insert({
-        bien_id: selected.id, nom: form.nom, ordre: Number(form.ordre) || 0
-      })
-      setModal(null); await load()
-    } catch(e) { setError(e.message) }
-    finally { setSaving(false) }
-  }
-
-  async function saveElement(pieceId) {
-    if (!form.nom_el) { setError('Nom obligatoire.'); return }
-    setSaving(true); setError('')
-    try {
-      await supabase.from('elements').insert({
-        piece_id: pieceId, nom: form.nom_el, type: form.type_el || 'autre'
-      })
-      setModal(null); await load()
-    } catch(e) { setError(e.message) }
-    finally { setSaving(false) }
-  }
-
-  async function deletePiece(id) {
-    if (!window.confirm('Supprimer cette pièce et ses éléments ?')) return
-    await supabase.from('pieces').delete().eq('id', id)
-    await load()
-  }
-
-  if (loading) return <Layout><div style={css.center}><div style={css.spinner}/></div></Layout>
-
-  return (
-    <Layout>
-      <div style={css.header}>
-        <div>
-          <h1 style={css.h1}>Mes biens</h1>
-          <p style={css.sub}>{biens.length} bien(s) enregistré(s)</p>
-        </div>
-        <button style={css.btnPrimary} onClick={() => openModal('bien')}>
-          + Ajouter un bien
-        </button>
-      </div>
-
-      {biens.length === 0 && (
-        <div style={css.emptyCard}>
-          <div style={{ fontSize: 48 }}>🏢</div>
-          <h2 style={css.emptyTitle}>Aucun bien enregistré</h2>
-          <p style={css.emptySub}>Commencez par ajouter votre premier bien immobilier.</p>
-          <button style={css.btnPrimary} onClick={() => openModal('bien')}>+ Ajouter un bien</button>
-        </div>
-      )}
-
-      {biens.map(b => {
-        const locActive = b.locations?.find(l => l.statut === 'actif')
-        return (
-          <div key={b.id} style={css.bienCard}>
-            {/* En-tête bien */}
-            <div style={css.bienHeader}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                <div style={css.bienIcon}>🏠</div>
-                <div>
-                  <div style={css.bienAddr}>{b.adresse}, {b.ville} {b.code_postal}</div>
-                  <div style={css.bienMeta}>{b.type_bien}{b.surface_m2 ? ` · ${b.surface_m2} m²` : ''}</div>
-                </div>
-              </div>
-              <div style={{ display: 'flex', gap: 8 }}>
-                <button style={{...css.btnSm, color:'#2B5EA7', borderColor:'#2B5EA7'}} onClick={() => navigate('/biens/'+b.id+'/plan')}>🗺️ Plan</button>
-                <button style={css.btnSm} onClick={() => { openModal('bien', b); setForm({ adresse: b.adresse, ville: b.ville, code_postal: b.code_postal, type_bien: b.type_bien, surface_m2: b.surface_m2 }) }}>✏️ Modifier</button>
-                <button style={css.btnSmDanger} onClick={() => deleteBien(b.id)}>🗑️ Supprimer</button>
-              </div>
-            </div>
-
-            <div style={css.bienBody}>
-              {/* LOCATAIRE */}
-              <div style={css.section}>
-                <div style={css.sectionTitle}>👤 Locataire</div>
-                {locActive ? (
-                  <div style={css.locCard}>
-                    <div>
-                      <div style={{ fontWeight: 600, fontSize: 13 }}>
-                        {locActive.locataire
-                          ? `${locActive.locataire.prenom} ${locActive.locataire.nom}`
-                          : <span style={{ color: '#9E9890' }}>Compte non créé</span>
-                        }
-                      </div>
-                      {locActive.locataire?.telephone && (
-                        <div style={{ fontSize: 12, color: '#6B6560' }}>{locActive.locataire.telephone}</div>
-                      )}
-                      <div style={{ fontSize: 12, color: '#6B6560', marginTop: 2 }}>
-                        {Number(locActive.loyer_mensuel).toLocaleString('fr-FR')} €/mois
-                        · depuis le {new Date(locActive.date_debut).toLocaleDateString('fr-FR')}
-                        {locActive.date_fin ? ` · jusqu'au ${new Date(locActive.date_fin).toLocaleDateString('fr-FR')}` : ''}
-                      </div>
-                    </div>
-                    <span style={css.badgeGreen}>Actif</span>
-                  </div>
-                ) : (
-                  <div style={css.locEmpty}>
-                    Aucun locataire associé
-                    <button style={css.btnXs} onClick={() => openModal('locataire', b)}>+ Associer</button>
-                  </div>
-                )}
-                <button style={{ ...css.btnXs, marginTop: 8 }} onClick={() => openModal('locataire', b)}>
-                  {locActive ? '🔄 Changer de locataire' : '+ Ajouter un locataire'}
-                </button>
-              </div>
-
-sx
-import React, { useEffect, useState } from 'react'
-import { useAuth } from '../lib/AuthContext'
-import { useNavigate } from 'react-router-dom'
-import { supabase } from '../lib/supabase'
-import Layout from '../components/Layout'
-
-export default function Biens() {
-  const { session } = useAuth()
-  const navigate = useNavigate()
-  const [biens, setBiens]       = useState([])
-  const [loading, setLoading]   = useState(true)
-  const [modal, setModal]       = useState(null) // null | 'bien' | 'locataire' | 'piece'
-  const [selected, setSelected] = useState(null) // bien sélectionné
-  const [form, setForm]         = useState({})
-  const [saving, setSaving]     = useState(false)
-  const [error, setError]       = useState('')
-
-  useEffect(() => { load() }, [session])
-
-  async function load() {
-    if (!session) return
-    setLoading(true)
-    const { data } = await supabase
-      .from('biens')
-      .select(`
-        *,
-        locations(
-          id, loyer_mensuel, date_debut, date_fin, statut,
-          locataire:profiles(id, nom, prenom, telephone)
-        ),
-        pieces(id, nom, ordre, elements(id, nom, type))
-      `)
-      .eq('proprietaire_id', session.user.id)
-      .order('created_at', { ascending: false })
-    setBiens(data || [])
-    setLoading(false)
-  }
+  useEffect(() => {
+    if (biensData) setBiens(biensData)
+  }, [biensData])
 
   function set(k, v) { setForm(f => ({ ...f, [k]: v })) }
 
