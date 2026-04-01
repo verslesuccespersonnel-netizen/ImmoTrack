@@ -9,9 +9,106 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    #stuck-overlay {
+      display: none;
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      z-index: 99999;
+      background: #B83232;
+      color: white;
+      border-radius: 10px;
+      padding: 12px 20px;
+      font-family: sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      text-decoration: none;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+      cursor: pointer;
+    }
+    #stuck-overlay:hover { background: #9a2828; }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+
+  <script>
+    // Script natif — fonctionne même si React est gelé
+    // Détecte si l'app est bloquée et propose une déconnexion d'urgence
+    (function() {
+      var TIMEOUT = 12000; // 12s avant d'afficher le bouton
+      var timer = null;
+
+      function clearSupabaseStorage() {
+        try {
+          Object.keys(localStorage)
+            .filter(function(k) {
+              return k.indexOf('sb-') === 0 || k.indexOf('supabase') !== -1 || k.indexOf('-auth-') !== -1;
+            })
+            .forEach(function(k) { localStorage.removeItem(k); });
+          sessionStorage.clear();
+        } catch(e) {}
+      }
+
+      function showButton() {
+        var el = document.getElementById('stuck-overlay');
+        if (el) el.style.display = 'block';
+      }
+
+      function hideButton() {
+        var el = document.getElementById('stuck-overlay');
+        if (el) el.style.display = 'none';
+      }
+
+      function resetTimer() {
+        clearTimeout(timer);
+        hideButton();
+        // Redémarrer le timer seulement si on est sur une page protégée
+        if (window.location.pathname !== '/connexion') {
+          timer = setTimeout(showButton, TIMEOUT);
+        }
+      }
+
+      // Démarrer au chargement
+      document.addEventListener('DOMContentLoaded', function() {
+        resetTimer();
+      });
+
+      // Réinitialiser sur toute interaction utilisateur
+      ['click', 'keydown', 'mousemove', 'touchstart'].forEach(function(ev) {
+        document.addEventListener(ev, resetTimer, { passive: true });
+      });
+
+      // Réinitialiser au retour sur l'onglet
+      document.addEventListener('visibilitychange', function() {
+        if (document.visibilityState === 'visible') {
+          resetTimer();
+          // Si on est bloqué sur /connexion, cacher le bouton
+          if (window.location.pathname === '/connexion') {
+            hideButton();
+            clearTimeout(timer);
+          }
+        }
+      });
+
+      // Exposer pour React
+      window.__immotrack_reset_stuck = resetTimer;
+      window.__immotrack_clear_storage = clearSupabaseStorage;
+    })();
+  </script>
 </head>
 <body>
   <noscript>ImmoTrack nécessite JavaScript.</noscript>
   <div id="root"></div>
+
+  <!-- Bouton de déconnexion d'urgence — toujours présent, fonctionne sans React -->
+  <a id="stuck-overlay"
+     href="/connexion"
+     onclick="window.__immotrack_clear_storage && window.__immotrack_clear_storage(); return true;">
+    🚪 Se déconnecter
+  </a>
+
 </body>
 </html>
