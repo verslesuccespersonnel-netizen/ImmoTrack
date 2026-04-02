@@ -6,52 +6,68 @@
   <meta name="theme-color" content="#2D5A3D" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <title>ImmoTrack</title>
   <script>
     // ═══════════════════════════════════════════════════════════
-    // FIX BUG ONGLET — Solution radicale et définitive
-    // Quand l'onglet est caché plus de 10s, on force un reload.
-    // Les fetch gelés sont ainsi annulés. Même approche que Gmail.
+    // FIX BFCACHE + ONGLET — Double protection
+    //
+    // Cause réelle du bug : le navigateur met la page en "bfcache"
+    // (back-forward cache) quand on change d'onglet. Les requêtes
+    // fetch() en cours sont gelées. Au retour, elles ne reprennent
+    // jamais → loading infini.
+    //
+    // Solution 1 : pageshow + persisted → reload si page vient du bfcache
+    // Solution 2 : visibilitychange + seuil 10s → reload si trop longtemps
     // ═══════════════════════════════════════════════════════════
     ;(function() {
-      var hiddenSince = null;
-      var THRESHOLD   = 10000; // 10 secondes
 
-      document.addEventListener('visibilitychange', function() {
-        if (document.visibilityState === 'hidden') {
-          hiddenSince = Date.now();
-        } else {
-          if (hiddenSince !== null && (Date.now() - hiddenSince) >= THRESHOLD) {
-            window.location.reload(true);
-          }
-          hiddenSince = null;
+      // ── Solution 1 : bfcache (la plus fiable) ─────────────────
+      // L'événement pageshow avec persisted=true signifie que la page
+      // est restaurée depuis le cache navigateur. On force un reload.
+      window.addEventListener('pageshow', function(e) {
+        if (e.persisted) {
+          console.log('ImmoTrack: page restored from bfcache → reloading');
+          window.location.reload(true);
         }
       });
 
-      // ── Bouton d'urgence ──────────────────────────────────────
-      // Apparaît si pas d'interaction pendant 12s (app gelée)
-      var urgTimer = null;
-
-      function resetUrgency() {
-        clearTimeout(urgTimer);
-        var btn = document.getElementById('emergency-btn');
-        if (btn) btn.classList.remove('visible');
-        if (window.location.pathname !== '/connexion') {
-          urgTimer = setTimeout(function() {
-            var b = document.getElementById('emergency-btn');
-            if (b) b.classList.add('visible');
-          }, 12000);
+      // ── Solution 2 : visibilitychange > 10s ───────────────────
+      var hiddenAt = null;
+      document.addEventListener('visibilitychange', function() {
+        if (document.visibilityState === 'hidden') {
+          hiddenAt = Date.now();
+        } else if (document.visibilityState === 'visible') {
+          if (hiddenAt && (Date.now() - hiddenAt) > 10000) {
+            console.log('ImmoTrack: tab hidden >10s → reloading');
+            window.location.reload(true);
+          }
+          hiddenAt = null;
         }
-      }
+      });
 
+      // ── Bouton urgence natif ───────────────────────────────────
       function clearAuth() {
         try {
           Object.keys(localStorage)
-            .filter(function(k){ return k.indexOf('sb-')===0 || k.indexOf('supabase')!==-1; })
-            .forEach(function(k){ localStorage.removeItem(k); });
+            .filter(function(k) {
+              return k.indexOf('sb-') === 0 || k.indexOf('supabase') !== -1;
+            })
+            .forEach(function(k) { localStorage.removeItem(k); });
           sessionStorage.clear();
-        } catch(e){}
+        } catch(e) {}
+      }
+
+      var urgTimer = null;
+      function resetUrgency() {
+        clearTimeout(urgTimer);
+        var btn = document.getElementById('emergency-btn');
+        if (btn) { btn.style.display = 'none'; }
+        if (window.location.pathname !== '/connexion') {
+          urgTimer = setTimeout(function() {
+            var b = document.getElementById('emergency-btn');
+            if (b) b.style.display = 'block';
+          }, 12000);
+        }
       }
 
       document.addEventListener('DOMContentLoaded', function() {
@@ -61,11 +77,31 @@
         });
       });
 
-      // API pour React
-      window.__itResetUrgency = resetUrgency;
       window.__itClearAuth    = clearAuth;
+      window.__itResetUrgency = resetUrgency;
     })();
   </script>
+  <style>
+    #emergency-btn {
+      display: none;
+      position: fixed;
+      bottom: 70px;
+      right: 16px;
+      z-index: 99999;
+      background: #B83232;
+      color: white;
+      border-radius: 12px;
+      padding: 12px 22px;
+      font-family: sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      text-decoration: none;
+      box-shadow: 0 4px 20px rgba(184,50,50,0.45);
+      cursor: pointer;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @media (min-width: 769px) { #emergency-btn { bottom: 20px; } }
+  </style>
 </head>
 <body>
   <noscript>ImmoTrack nécessite JavaScript.</noscript>
