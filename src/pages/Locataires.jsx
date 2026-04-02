@@ -40,7 +40,7 @@ export default function Locataires() {
       supabase.from('locations').select(`
         *,
         bien:biens(id, adresse, ville, type_bien),
-        locataire:profiles(id, nom, prenom, telephone, telephone2, email, notes),
+        locataire:profiles!locataire_id(id, nom, prenom, telephone, telephone2, email, notes),
         garants(*),
         occupants(*)
       `).order('created_at', { ascending: false }),
