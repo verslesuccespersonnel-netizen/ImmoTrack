@@ -46,14 +46,17 @@ export default function Locataires() {
         loyer_mensuel: Number(form.loyer), date_debut: form.date_debut,
         date_fin: form.date_fin||null, statut:'actif',
       }).select().single()
-      await supabase.from('occupants').insert({ location_id:loc.id, nom:form.nom, prenom:form.prenom, lien:'titulaire', date_naissance:form.dob||null })
+      const { error: occErr } = await supabase.from('occupants').insert({ location_id:loc.id, nom:form.nom, prenom:form.prenom, lien:'titulaire', date_naissance:form.dob||null })
+      if (occErr) console.warn('occupant insert:', occErr.message)
       if (!form.user_id) {
-        await supabase.from('invitations').insert({
-          email:(form.email||`loc-${loc.id}@immotrack.app`).toLowerCase(), role:'locataire',
-          nom:form.nom, prenom:form.prenom, telephone:form.telephone||null,
-          bien_id:form.bien_id, loyer:Number(form.loyer), date_debut:form.date_debut,
-          type_contrat:form.type_contrat||null, cree_par:session.user.id,
-        }).catch(()=>{})
+        try {
+          await supabase.from('invitations').insert({
+            email:(form.email||`loc-${loc.id}@immotrack.app`).toLowerCase(), role:'locataire',
+            nom:form.nom, prenom:form.prenom, telephone:form.telephone||null,
+            bien_id:form.bien_id, loyer:Number(form.loyer), date_debut:form.date_debut,
+            type_contrat:form.type_contrat||null, cree_par:session.user.id,
+          })
+        } catch(_) {}
       }
       setModal(null); await load()
     } catch(e) { setError(e.message) }

@@ -110,20 +110,35 @@ export default function PlanBien() {
     return r?{col:Math.max(0,Math.floor((e.clientX-r.left)/CELL)),row:Math.max(0,Math.floor((e.clientY-r.top)/CELL))}:{col:0,row:0}
   }
 
-  function startResize(e, piece) {
+  function startResize(e, pieceId) {
     e.stopPropagation()
-    const sx=e.clientX,sy=e.clientY,sw=piece.w,sh=piece.h
-    function mv(ev){
-      const dw=Math.round((ev.clientX-sx)/CELL),dh=Math.round((ev.clientY-sy)/CELL)
-      const cur=planRef.current.find(x=>x.id===piece.id); if(!cur) return
-      setPlan(p=>p.map(x=>x.id===piece.id?{...x,w:Math.max(1,Math.min(GW-cur.x,sw+dw)),h:Math.max(1,Math.min(GH-cur.y,sh+dh))}:x))
+    e.preventDefault()
+    const sx = e.clientX, sy = e.clientY
+    // Lire les dimensions de départ depuis planRef (toujours à jour)
+    const start = planRef.current.find(x => x.id === pieceId)
+    if (!start) return
+    const sw = start.w, sh = start.h
+
+    function mv(ev) {
+      const dw = Math.round((ev.clientX - sx) / CELL)
+      const dh = Math.round((ev.clientY - sy) / CELL)
+      const cur = planRef.current.find(x => x.id === pieceId)
+      if (!cur) return
+      const nw = Math.max(1, Math.min(GW - cur.x, sw + dw))
+      const nh = Math.max(1, Math.min(GH - cur.y, sh + dh))
+      setPlan(p => p.map(x => x.id === pieceId ? { ...x, w: nw, h: nh } : x))
     }
-    async function mu(){
-      document.removeEventListener('mousemove',mv); document.removeEventListener('mouseup',mu)
-      const cur=planRef.current.find(x=>x.id===piece.id)
-      if(cur) await supabase.from('plan_pieces').update({w:cur.w,h:cur.h}).eq('id',cur.id)
+
+    async function mu() {
+      document.removeEventListener('mousemove', mv)
+      document.removeEventListener('mouseup', mu)
+      // Lire la valeur finale depuis planRef
+      const cur = planRef.current.find(x => x.id === pieceId)
+      if (cur) await supabase.from('plan_pieces').update({ w: cur.w, h: cur.h }).eq('id', cur.id)
     }
-    document.addEventListener('mousemove',mv); document.addEventListener('mouseup',mu)
+
+    document.addEventListener('mousemove', mv)
+    document.addEventListener('mouseup', mu)
   }
 
   function onMouseMove(e) {
@@ -233,7 +248,7 @@ export default function PlanBien() {
                   {ph>52&&<text x={px+pw/2} y={py+ph/2+(ph>80?12:8)} textAnchor="middle" fontSize="11" fontWeight="500" fill="#1A1714" fontFamily="sans-serif" style={{pointerEvents:'none'}}>{p.nom}{peq.length>0?` (${peq.length})`:''}</text>}
                   {isSel&&<>
                     <g onClick={e=>{e.stopPropagation();if(window.confirm('Supprimer ?')){supabase.from('plan_pieces').delete().eq('id',p.id);setPlan(arr=>arr.filter(x=>x.id!==p.id));setSelP(null)}}} style={{cursor:'pointer'}}><circle cx={px+pw-9} cy={py+9} r="9" fill="#B83232" opacity=".85"/><text x={px+pw-9} y={py+9} textAnchor="middle" dominantBaseline="middle" fontSize="11" fill="white">✕</text></g>
-                    <rect x={px+pw-14} y={py+ph-14} width="12" height="12" rx="2" fill="#2D5A3D" opacity=".7" style={{cursor:'se-resize'}} onMouseDown={e=>{e.stopPropagation();startResize(e,p)}}/>
+                    <rect x={px+pw-14} y={py+ph-14} width="12" height="12" rx="2" fill="#2D5A3D" opacity=".7" style={{cursor:'se-resize'}} onMouseDown={e=>{e.stopPropagation();startResize(e,p.id)}}/>
                     <text x={px+pw-8} y={py+ph-8} textAnchor="middle" dominantBaseline="middle" fontSize="8" fill="white" style={{pointerEvents:'none'}}>↘</text>
                   </>}
                 </g>
