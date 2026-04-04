@@ -5,6 +5,30 @@ import { supabase } from '../lib/supabase'
 import { VERSION } from '../lib/version'
 
 const NAV = {
+  admin: [
+    { path:'/', label:'Tableau de bord', icon:'📊' },
+    { path:'/biens', label:'Tous les biens', icon:'🏢' },
+    { path:'/locataires', label:'Locataires', icon:'👥' },
+    { path:'/incidents', label:'Incidents', icon:'⚠️' },
+    { path:'/prestataires', label:'Prestataires', icon:'🔧' },
+    { path:'/documents', label:'Documents', icon:'📄' },
+    { path:'/messages', label:'Messages', icon:'💬', badge:true },
+    { path:'/catalogue', label:'Catalogue', icon:'📚', sep:true },
+    { path:'/admin', label:'Administration', icon:'⚙️' },
+    { path:'/demo', label:'Démonstration', icon:'🎯' },
+  ],
+  agence: [
+    { path:'/', label:'Tableau de bord', icon:'📊' },
+    { path:'/biens', label:'Portefeuille', icon:'🏢' },
+    { path:'/locataires', label:'Locataires', icon:'👥' },
+    { path:'/incidents', label:'Incidents', icon:'⚠️' },
+    { path:'/prestataires', label:'Prestataires', icon:'🔧' },
+    { path:'/documents', label:'Documents', icon:'📄' },
+    { path:'/messages', label:'Messages', icon:'💬', badge:true },
+    { path:'/catalogue', label:'Catalogue', icon:'📚', sep:true },
+    { path:'/admin', label:'Administration', icon:'⚙️' },
+    { path:'/demo', label:'Démonstration', icon:'🎯' },
+  ],
   locataire: [
     { path:'/', label:'Accueil', icon:'🏠' },
     { path:'/incidents', label:'Mes incidents', icon:'⚠️' },
@@ -43,10 +67,13 @@ const MOBILE_PATHS = {
   locataire:    ['/', '/incidents', '/signaler', '/messages', '/documents'],
   proprietaire: ['/', '/biens', '/incidents', '/messages', '/admin'],
   gestionnaire: ['/', '/biens', '/incidents', '/messages', '/admin'],
+  agence:       ['/', '/biens', '/incidents', '/messages', '/admin'],
+  admin:        ['/', '/biens', '/incidents', '/messages', '/admin'],
+  prestataire:  ['/', '/incidents', '/messages', '/documents', '/demo'],
 }
 
-const ROLE_COLOR = { locataire:'#2B5EA7', proprietaire:'#2D5A3D', gestionnaire:'#C8813A' }
-const ROLE_BG    = { locataire:'#EBF2FC', proprietaire:'#E8F2EB', gestionnaire:'#FDF3E7' }
+const ROLE_COLOR = { locataire:'#2B5EA7', proprietaire:'#2D5A3D', gestionnaire:'#C8813A', agence:'#C8813A', admin:'#B83232', prestataire:'#6B6560' }
+const ROLE_BG    = { locataire:'#EBF2FC', proprietaire:'#E8F2EB', gestionnaire:'#FDF3E7', agence:'#FDF3E7', admin:'#FDEAEA', prestataire:'#F7F5F0' }
 
 export default function Layout({ children }) {
   const { profile, session } = useAuth()
