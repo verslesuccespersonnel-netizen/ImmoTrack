@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react'
+import React, { createContext, useContext, useEffect, useState, useRef } from 'react'
 import { supabase } from './supabase'
 
 const Ctx = createContext(null)
@@ -7,17 +7,21 @@ export function AuthProvider({ children }) {
   const [session, setSession] = useState(null)
   const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
+  // Ref pour suivre si boot() est terminé — évite la closure stale
+  const bootDoneRef = useRef(false)
 
-  useEffect(() => {
-    let active = true
-
-    async function fetchProfile(userId) {
+  async function fetchProfile(userId) {
+    try {
       const { data } = await supabase
         .from('profiles').select('*').eq('id', userId).single()
       return data || null
-    }
+    } catch { return null }
+  }
 
-    // Boot : getSession() lit le localStorage — synchrone, fiable, sans WebSocket
+  useEffect(() => {
+    let active = true
+    bootDoneRef.current = false
+
     async function boot() {
       try {
         const { data: { session: s } } = await supabase.auth.getSession()
@@ -28,29 +32,26 @@ export function AuthProvider({ children }) {
           if (active) setProfile(p)
         }
       } catch(e) {
-        console.error('boot error:', e.message)
+        console.error('boot:', e.message)
       } finally {
-        if (active) setLoading(false)
+        if (active) {
+          bootDoneRef.current = true  // marquer boot terminé
+          setLoading(false)
+        }
       }
     }
 
     boot()
 
-    // Listener MINIMAL — uniquement pour :
-    // 1. SIGNED_IN : login utilisateur (nouveau)
-    // 2. SIGNED_OUT : déconnexion
-    // 3. TOKEN_REFRESHED : renouvellement silencieux
-    //
-    // On IGNORE INITIAL_SESSION car boot() s'en charge déjà.
-    // On vérifie que loading est terminé avant de traiter SIGNED_IN
-    // pour éviter de relancer un fetch si on vient du bfcache.
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, s) => {
         if (!active) return
         console.log('Auth:', event)
 
         if (event === 'SIGNED_OUT' || !s) {
-          setSession(null); setProfile(null); setLoading(false)
+          setSession(null)
+          setProfile(null)
+          setLoading(false)
           return
         }
 
@@ -59,16 +60,15 @@ export function AuthProvider({ children }) {
           return
         }
 
-        // SIGNED_IN : seulement si on n'est PAS en train de booter
-        // et que la session a changé (vrai nouveau login)
+        // SIGNED_IN : utiliser le REF (pas la variable) pour vérifier si boot est fait
         if (event === 'SIGNED_IN' && s?.user) {
           setSession(s)
-          // Charger le profil seulement si loading est déjà false
-          // (sinon boot() s'en occupe déjà)
-          if (!loading) {
+          if (bootDoneRef.current) {
+            // Boot déjà terminé → c'est un vrai nouveau login, charger le profil
             const p = await fetchProfile(s.user.id)
             if (active) setProfile(p)
           }
+          // Sinon boot() s'en occupe déjà, on ne touche pas à loading
         }
       }
     )
@@ -77,7 +77,7 @@ export function AuthProvider({ children }) {
       active = false
       subscription.unsubscribe()
     }
-  }, []) // eslint-disable-line
+  }, [])
 
   return (
     <Ctx.Provider value={{ session, profile, loading }}>
