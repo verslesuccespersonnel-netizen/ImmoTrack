@@ -4,38 +4,63 @@ import { supabase } from './supabase'
 const Ctx = createContext(null)
 
 export function AuthProvider({ children }) {
-  const [session, setSession] = useState(null)
-  const [profile, setProfile] = useState(null)
-  const [loading, setLoading] = useState(true)
-  // Ref pour suivre si boot() est terminé — évite la closure stale
-  const bootDoneRef = useRef(false)
-
-  async function fetchProfile(userId) {
-    try {
-      const { data } = await supabase
-        .from('profiles').select('*').eq('id', userId).single()
-      return data || null
-    } catch { return null }
-  }
+  const [session, setSession]   = useState(null)
+  const [profile, setProfile]   = useState(null)
+  const [loading, setLoading]   = useState(true)
+  const bootDone = useRef(false)
+  const active   = useRef(true)
 
   useEffect(() => {
-    let active = true
-    bootDoneRef.current = false
+    active.current   = true
+    bootDone.current = false
+
+    // Timeout absolu 6s — quoi qu'il arrive loading devient false
+    const killswitch = setTimeout(() => {
+      if (!bootDone.current && active.current) {
+        console.warn('AuthContext: timeout — forcing loading=false')
+        bootDone.current = true
+        setLoading(false)
+      }
+    }, 6000)
 
     async function boot() {
       try {
-        const { data: { session: s } } = await supabase.auth.getSession()
-        if (!active) return
-        if (s?.user) {
-          setSession(s)
-          const p = await fetchProfile(s.user.id)
-          if (active) setProfile(p)
+        // getSession() lit le localStorage — doit être quasi instantané
+        const { data: { session: s }, error: sErr } = await supabase.auth.getSession()
+        if (sErr) throw sErr
+        if (!active.current) return
+
+        if (!s?.user) {
+          // Pas de session → login screen
+          setSession(null)
+          setProfile(null)
+          return
         }
+
+        setSession(s)
+
+        // Charger le profil avec timeout propre
+        const profilePromise = supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', s.user.id)
+          .single()
+
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('profile timeout')), 4000)
+        )
+
+        const { data: p } = await Promise.race([profilePromise, timeoutPromise])
+          .catch(e => { console.warn('Profile load failed:', e.message); return { data: null } })
+
+        if (active.current) setProfile(p || null)
+
       } catch(e) {
-        console.error('boot:', e.message)
+        console.error('boot error:', e.message)
       } finally {
-        if (active) {
-          bootDoneRef.current = true  // marquer boot terminé
+        if (active.current) {
+          bootDone.current = true
+          clearTimeout(killswitch)
           setLoading(false)
         }
       }
@@ -43,15 +68,14 @@ export function AuthProvider({ children }) {
 
     boot()
 
+    // Listener minimaliste — seulement les vrais changements d'état
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, s) => {
-        if (!active) return
-        console.log('Auth:', event)
+        if (!active.current) return
+        console.log('Auth event:', event)
 
-        if (event === 'SIGNED_OUT' || !s) {
-          setSession(null)
-          setProfile(null)
-          setLoading(false)
+        if (event === 'SIGNED_OUT') {
+          setSession(null); setProfile(null); setLoading(false)
           return
         }
 
@@ -60,21 +84,23 @@ export function AuthProvider({ children }) {
           return
         }
 
-        // SIGNED_IN : utiliser le REF (pas la variable) pour vérifier si boot est fait
-        if (event === 'SIGNED_IN' && s?.user) {
+        // SIGNED_IN : seulement après boot (bootDone.current = true)
+        if (event === 'SIGNED_IN' && s?.user && bootDone.current) {
           setSession(s)
-          if (bootDoneRef.current) {
-            // Boot déjà terminé → c'est un vrai nouveau login, charger le profil
-            const p = await fetchProfile(s.user.id)
-            if (active) setProfile(p)
+          try {
+            const { data: p } = await supabase
+              .from('profiles').select('*').eq('id', s.user.id).single()
+            if (active.current) setProfile(p || null)
+          } catch(e) {
+            console.warn('Profile reload failed:', e.message)
           }
-          // Sinon boot() s'en occupe déjà, on ne touche pas à loading
         }
       }
     )
 
     return () => {
-      active = false
+      active.current = false
+      clearTimeout(killswitch)
       subscription.unsubscribe()
     }
   }, [])
