@@ -118,7 +118,7 @@ export default function Admin() {
   if (error)   return <Layout><div className="it-center"><div className="alert alert-error">{error}</div></div></Layout>
 
   const rd = r => ROLES_D[r] || ROLES_D.prestataire
-  const TABS = [['users','👥 Comptes'],['biens','🏢 Biens'],..  (isAdmin?[['incidents','⚠️ Incidents'],['tools','🛠️ Outils']]:[])]
+  const TABS = [['users','👥 Comptes'],['biens','🏢 Biens'],...(isAdmin?[['incidents','⚠️ Incidents'],['tools','🛠️ Outils']]:[])]
 
   return (
     <Layout>
