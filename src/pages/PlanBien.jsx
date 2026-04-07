@@ -47,7 +47,8 @@ export default function PlanBien() {
   const [search, setSearch] = useState('')
   const svgRef = useRef(null)
   // Ref pour accès synchrone dans les event listeners document
-  const planRef = useRef([])
+  const planRef    = useRef([])
+  const isResizing = useRef(false)
   planRef.current = plan
 
   const {data, loading, error} = useLoad(async () => {
@@ -114,6 +115,7 @@ export default function PlanBien() {
   }
 
   async function onMU(){
+    if(isResizing.current) return  // resize géré par ses propres listeners
     if(drag){const p=planRef.current.find(x=>x.id===drag.id);if(p)await supabase.from('plan_pieces').update({x:p.x,y:p.y}).eq('id',p.id);setDrag(null)}
     if(dragE){const e=equips.find(x=>x.id===dragE.id);if(e)await supabase.from('plan_equipements').update({grid_x:e.grid_x,grid_y:e.grid_y}).eq('id',e.id);setDragE(null)}
   }
@@ -125,6 +127,7 @@ export default function PlanBien() {
   function onResizeMouseDown(e, pieceId) {
     e.stopPropagation()
     e.preventDefault()
+    isResizing.current = true
     const startX = e.clientX
     const startY = e.clientY
     // Lire les dimensions de départ depuis planRef (toujours à jour)
@@ -149,6 +152,7 @@ export default function PlanBien() {
     async function onUp() {
       document.removeEventListener('mousemove', onMove)
       document.removeEventListener('mouseup', onUp)
+      isResizing.current = false
       // Lire depuis planRef pour la valeur finale
       const cur = planRef.current.find(p => p.id === pieceId)
       if (cur) await supabase.from('plan_pieces').update({ w: cur.w, h: cur.h }).eq('id', cur.id)
