@@ -64,10 +64,10 @@ export default function Locataires() {
   async function createLocataire() {
     // Validation multi-onglets avec indication de l'onglet manquant
     const missing = []
-    if (!form.nom || !form.prenom) missing.push('Nom et prénom → onglet "Locataire"')
-    if (!form.bien_id) missing.push('Bien → onglet "Contrat"')
-    if (!form.loyer) missing.push('Loyer → onglet "Contrat"')
-    if (!form.date_debut) missing.push('Date d'entrée → onglet "Contrat"')
+    if (!form.nom || !form.prenom) missing.push("Nom et prénom : onglet Locataire")
+    if (!form.bien_id) missing.push("Bien : onglet Contrat")
+    if (!form.loyer) missing.push("Loyer : onglet Contrat")
+    if (!form.date_debut) missing.push("Date d'entrée → onglet Contrat")
     if (missing.length > 0) {
       setFormErr('Champs manquants : ' + missing.join(' · '))
       if (!form.nom || !form.prenom) setActiveTab('principal')
