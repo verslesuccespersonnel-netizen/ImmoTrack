@@ -427,7 +427,7 @@ function LocCard({loc,archived,expanded,setExpanded,setModal,setForm,setFormErr,
   }[loc.type_location||loc.type_contrat||'vide']
 
   return(
-    <div className="card" style={{marginBottom:10,opacity:archived?.75:1}}>
+    <div className="card" style={{marginBottom:10,opacity:archived?0.75:1}}>
       <div className="card-header" style={{cursor:'pointer'}} onClick={()=>setExpanded(isExp?null:loc.id)}>
         <div style={{display:'flex',alignItems:'center',gap:10}}>
           <div style={{width:36,height:36,borderRadius:'50%',background:archived?'#F7F5F0':'#EBF2FC',color:archived?'#9E9890':'#2B5EA7',display:'flex',alignItems:'center',justifyContent:'center',fontSize:13,fontWeight:700,flexShrink:0}}>
