@@ -25,6 +25,18 @@ export default function Locataires() {
 
   useEffect(() => { if (session?.user) load() }, [session?.user?.id])
 
+  // Auto-remplissage des infos du bien sélectionné
+  useEffect(() => {
+    if (!form.bien_id) return
+    supabase.from('biens').select('surface_m2,type_bien').eq('id',form.bien_id).single()
+      .then(({data:b}) => {
+        if (b) setForm(f => ({
+          ...f,
+          surface_m2: f.surface_m2 || b.surface_m2 || '',
+        }))
+      })
+  }, [form.bien_id])
+
   async function load() {
     setLoading(true); setError(null)
     try {
@@ -50,8 +62,17 @@ export default function Locataires() {
 
   // Créer un locataire avec toutes les infos
   async function createLocataire() {
-    if (!form.nom||!form.prenom||!form.bien_id||!form.loyer||!form.date_debut) {
-      setFormErr('Nom, prénom, bien, loyer et date d\'entrée sont obligatoires.'); return
+    // Validation multi-onglets avec indication de l'onglet manquant
+    const missing = []
+    if (!form.nom || !form.prenom) missing.push('Nom et prénom → onglet "Locataire"')
+    if (!form.bien_id) missing.push('Bien → onglet "Contrat"')
+    if (!form.loyer) missing.push('Loyer → onglet "Contrat"')
+    if (!form.date_debut) missing.push('Date d'entrée → onglet "Contrat"')
+    if (missing.length > 0) {
+      setFormErr('Champs manquants : ' + missing.join(' · '))
+      if (!form.nom || !form.prenom) setActiveTab('principal')
+      else setActiveTab('contrat')
+      return
     }
     setSaving(true); setFormErr('')
     try {

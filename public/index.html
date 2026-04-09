@@ -10,17 +10,29 @@
   <link rel="icon" type="image/svg+xml" href="/favicon.svg"/>
   <link rel="apple-touch-icon" href="/favicon.svg"/>
   <script>
-    // FIX BFCACHE : reload immédiat si page vient du cache navigateur
+    // FIX BFCACHE : reload si la page vient du cache navigateur (bfcache)
     window.addEventListener('pageshow', function(e) {
       if (e.persisted) { window.location.reload(true); }
     });
-    // FIX ONGLET : reload immédiat au retour sur l'onglet (sans seuil)
+
+    // FIX ONGLET : reload seulement si :
+    // - caché > 30 secondes (pas pendant la saisie de formulaire)
+    // - ET aucun modal ouvert (pas d'élément .modal-overlay visible)
+    var _hiddenAt = null;
     document.addEventListener('visibilitychange', function() {
-      if (document.visibilityState === 'visible') {
+      if (document.visibilityState === 'hidden') {
+        _hiddenAt = Date.now();
+      } else if (document.visibilityState === 'visible') {
+        var hidden = _hiddenAt ? (Date.now() - _hiddenAt) : 0;
+        _hiddenAt = null;
+        if (hidden < 30000) return; // moins de 30s : pas de reload
+        // Vérifier qu'aucun modal n'est ouvert
+        var modal = document.querySelector('.modal-overlay');
+        if (modal && modal.style.display !== 'none') return; // modal ouvert : pas de reload
         window.location.reload(true);
       }
     });
-    // Bouton urgence si tout est gelé
+
     function _clearAuth() {
       try { Object.keys(localStorage).filter(function(k){return k.indexOf('sb-')===0||k.indexOf('supabase')!==-1;}).forEach(function(k){localStorage.removeItem(k);}); sessionStorage.clear(); } catch(e) {}
     }
