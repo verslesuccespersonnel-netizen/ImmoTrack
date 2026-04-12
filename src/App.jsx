@@ -15,6 +15,7 @@ import Prestataires  from './pages/Prestataires'
 import Catalogue     from './pages/Catalogue'
 import Admin         from './pages/Admin'
 import Demo          from './pages/Demo'
+import Quittances    from './pages/Quittances'
 
 // Tous les rôles avec accès gestion
 const MGR = ['proprietaire','gestionnaire','agence','admin']
