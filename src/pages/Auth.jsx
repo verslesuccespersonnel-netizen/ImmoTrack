@@ -1,104 +1,144 @@
 import React, { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 
-const ROLES = [
-  { v:'locataire',    l:'Locataire',    icon:'🏠', desc:'Je loue un logement' },
-  { v:'proprietaire', l:'Propriétaire', icon:'🏢', desc:'Je gère mes propres biens' },
-  { v:'agence',       l:'Agence',       icon:'🏗️', desc:'Je gère des biens pour des propriétaires' },
-  { v:'prestataire',  l:'Prestataire',  icon:'🔧', desc:'Artisan / entreprise de maintenance' },
-]
+const MODES = { login:'login', register:'register', forgot:'forgot' }
 
 export default function Auth() {
-  const [mode, setMode]   = useState('login')
-  const [form, setForm]   = useState({ email:'', password:'', nom:'', prenom:'', role:'locataire', confirm:'' })
+  const navigate  = useNavigate()
+  const [mode, setMode]     = useState(MODES.login)
+  const [email, setEmail]   = useState('')
+  const [pass,  setPass]    = useState('')
+  const [prenom, setPrenom] = useState('')
+  const [nom,   setNom]     = useState('')
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
-  const [ok, setOk]       = useState('')
+  const [msg,   setMsg]     = useState({ text:'', type:'' })
 
-  function set(k,v) { setForm(f=>({...f,[k]:v})) }
+  function info(text)  { setMsg({ text, type:'info' }) }
+  function error(text) { setMsg({ text, type:'error' }) }
+  function ok(text)    { setMsg({ text, type:'success' }) }
 
-  async function submit(e) {
+  async function login(e) {
     e.preventDefault()
-    setError(''); setOk(''); setLoading(true)
-    try {
-      if (mode === 'login') {
-        const { error: err } = await supabase.auth.signInWithPassword({ email: form.email, password: form.password })
-        if (err) throw err
-      } else {
-        if (!form.nom || !form.prenom) throw new Error('Nom et prénom requis')
-        if (form.password !== form.confirm) throw new Error('Les mots de passe ne correspondent pas')
-        if (form.password.length < 6) throw new Error('Mot de passe trop court (6 car. min)')
-        const { error: err } = await supabase.auth.signUp({
-          email: form.email, password: form.password,
-          options: { data: { role: form.role, nom: form.nom, prenom: form.prenom } }
-        })
-        if (err) throw err
-        setOk('Compte créé ! Connectez-vous.')
-        setMode('login')
-      }
-    } catch(e) { setError(e.message) }
-    finally { setLoading(false) }
+    setLoading(true); setMsg({ text:'', type:'' })
+    const { error: err } = await supabase.auth.signInWithPassword({ email: email.trim(), password: pass })
+    if (err) { error(err.message); setLoading(false); return }
+    navigate('/')
+  }
+
+  async function register(e) {
+    e.preventDefault()
+    if (!prenom || !nom) { error('Prénom et nom requis'); return }
+    if (pass.length < 6) { error('Mot de passe : 6 caractères minimum'); return }
+    setLoading(true); setMsg({ text:'', type:'' })
+    const { data, error: err } = await supabase.auth.signUp({
+      email: email.trim(),
+      password: pass,
+      options: { data: { prenom: prenom.trim(), nom: nom.trim() } },
+    })
+    if (err) { error(err.message); setLoading(false); return }
+    if (data.user && !data.session) {
+      ok('Compte créé ! Vérifiez votre email pour confirmer.')
+      setLoading(false)
+    } else {
+      navigate('/')
+    }
+  }
+
+  async function forgot(e) {
+    e.preventDefault()
+    setLoading(true); setMsg({ text:'', type:'' })
+    const { error: err } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+      redirectTo: window.location.origin + '/connexion',
+    })
+    setLoading(false)
+    if (err) { error(err.message); return }
+    ok('Email envoyé ! Vérifiez votre boîte mail pour réinitialiser votre mot de passe.')
+  }
+
+  const inputStyle = {
+    padding:'10px 13px', border:'1px solid rgba(0,0,0,.15)', borderRadius:8,
+    fontFamily:'inherit', fontSize:14, outline:'none', width:'100%',
+    transition:'border-color .15s',
   }
 
   return (
     <div style={{ minHeight:'100vh', background:'#F7F5F0', display:'flex', alignItems:'center', justifyContent:'center', padding:16 }}>
-      <div style={{ background:'#fff', borderRadius:16, border:'1px solid rgba(0,0,0,.08)', padding:'36px 32px', width:'100%', maxWidth:480, boxShadow:'0 4px 24px rgba(0,0,0,.07)' }}>
-        <div style={{ fontFamily:'Georgia,serif', fontSize:28, fontWeight:700, textAlign:'center', marginBottom:4 }}>
-          <span style={{ color:'#2D5A3D' }}>Immo</span><span style={{ color:'#C8813A' }}>Track</span>
-        </div>
-        <p style={{ textAlign:'center', color:'#9E9890', fontSize:13, marginBottom:24 }}>Gestion locative simplifiée</p>
+      <div style={{ background:'#fff', borderRadius:16, padding:'36px 32px', width:'100%', maxWidth:380, boxShadow:'0 4px 24px rgba(0,0,0,.08)' }}>
 
-        <div style={{ display:'flex', borderBottom:'1px solid rgba(0,0,0,.08)', marginBottom:20 }}>
-          {[['login','Connexion'],['register','Créer un compte']].map(([v,l]) => (
-            <button key={v} onClick={() => { setMode(v); setError('') }}
-              style={{ flex:1, padding:'9px 0', border:'none', cursor:'pointer', background:'transparent',
-                fontFamily:'inherit', fontSize:13, fontWeight:500,
-                color: mode===v?'#2D5A3D':'#6B6560',
-                borderBottom: mode===v?'2px solid #2D5A3D':'2px solid transparent' }}>
-              {l}
-            </button>
-          ))}
+        <div style={{ textAlign:'center', marginBottom:28 }}>
+          <div style={{ fontFamily:'Georgia,serif', fontSize:28, fontWeight:700, marginBottom:6 }}>
+            <span style={{ color:'#2D5A3D' }}>Immo</span><span style={{ color:'#C8813A' }}>Track</span>
+          </div>
+          <div style={{ fontSize:13, color:'#9E9890' }}>
+            {mode === MODES.login    ? 'Connexion à votre espace'
+             : mode === MODES.register ? 'Créer un compte'
+             : 'Réinitialiser le mot de passe'}
+          </div>
         </div>
 
-        {error && <div className="alert alert-error" style={{ marginBottom:12 }}>{error}</div>}
-        {ok    && <div className="alert alert-success" style={{ marginBottom:12 }}>{ok}</div>}
+        {msg.text && (
+          <div className={'alert alert-' + (msg.type === 'error' ? 'error' : msg.type === 'success' ? 'success' : 'info')}
+            style={{ marginBottom:16 }}>
+            {msg.text}
+          </div>
+        )}
 
-        <form onSubmit={submit} style={{ display:'flex', flexDirection:'column', gap:12 }}>
-          {mode === 'register' && (
-            <>
-              <div className="grid2">
-                <div className="fld"><label>Prénom *</label><input value={form.prenom} onChange={e=>set('prenom',e.target.value)} required /></div>
-                <div className="fld"><label>Nom *</label><input value={form.nom} onChange={e=>set('nom',e.target.value)} required /></div>
-              </div>
+        <form onSubmit={mode === MODES.forgot ? forgot : mode === MODES.register ? register : login}
+          style={{ display:'flex', flexDirection:'column', gap:14 }}>
 
-              <div className="fld">
-                <label>Vous êtes *</label>
-                <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8, marginTop:4 }}>
-                  {ROLES.map(r => (
-                    <label key={r.v} style={{ display:'flex', alignItems:'center', gap:8, padding:'10px 12px', borderRadius:10, cursor:'pointer',
-                      border:`1.5px solid ${form.role===r.v?'#2D5A3D':'rgba(0,0,0,.12)'}`,
-                      background: form.role===r.v?'#E8F2EB':'#FAFAF8' }}>
-                      <input type="radio" name="role" value={r.v} checked={form.role===r.v} onChange={() => set('role',r.v)} style={{ display:'none' }} />
-                      <span style={{ fontSize:20 }}>{r.icon}</span>
-                      <div>
-                        <div style={{ fontWeight:600, fontSize:12, color: form.role===r.v?'#2D5A3D':'#1A1714' }}>{r.l}</div>
-                        <div style={{ fontSize:10, color:'#9E9890', lineHeight:1.3 }}>{r.desc}</div>
-                      </div>
-                    </label>
-                  ))}
-                </div>
+          {mode === MODES.register && (
+            <div style={{ display:'flex', gap:10 }}>
+              <div style={{ flex:1 }}>
+                <div style={{ fontSize:11, fontWeight:700, color:'#6B6560', textTransform:'uppercase', marginBottom:4 }}>Prénom *</div>
+                <input style={inputStyle} value={prenom} onChange={e=>setPrenom(e.target.value)} autoComplete="given-name" required/>
               </div>
-            </>
+              <div style={{ flex:1 }}>
+                <div style={{ fontSize:11, fontWeight:700, color:'#6B6560', textTransform:'uppercase', marginBottom:4 }}>Nom *</div>
+                <input style={inputStyle} value={nom} onChange={e=>setNom(e.target.value)} autoComplete="family-name" required/>
+              </div>
+            </div>
           )}
 
-          <div className="fld"><label>Email *</label><input type="email" value={form.email} onChange={e=>set('email',e.target.value)} required /></div>
-          <div className="fld"><label>Mot de passe *</label><input type="password" value={form.password} onChange={e=>set('password',e.target.value)} required /></div>
-          {mode==='register' && <div className="fld"><label>Confirmer *</label><input type="password" value={form.confirm} onChange={e=>set('confirm',e.target.value)} required /></div>}
+          <div>
+            <div style={{ fontSize:11, fontWeight:700, color:'#6B6560', textTransform:'uppercase', marginBottom:4 }}>Email *</div>
+            <input style={inputStyle} type="email" value={email} onChange={e=>setEmail(e.target.value)} autoComplete="email" required/>
+          </div>
 
-          <button type="submit" className="btn btn-primary" style={{ marginTop:4 }} disabled={loading}>
-            {loading ? '…' : mode==='login' ? 'Se connecter' : 'Créer mon compte'}
+          {mode !== MODES.forgot && (
+            <div>
+              <div style={{ fontSize:11, fontWeight:700, color:'#6B6560', textTransform:'uppercase', marginBottom:4 }}>Mot de passe *</div>
+              <input style={inputStyle} type="password" value={pass} onChange={e=>setPass(e.target.value)} autoComplete={mode === MODES.register ? 'new-password' : 'current-password'} required/>
+            </div>
+          )}
+
+          <button type="submit" disabled={loading}
+            style={{ padding:'12px', background:'#2D5A3D', color:'#fff', border:'none', borderRadius:9, fontFamily:'inherit', fontSize:14, fontWeight:600, cursor:'pointer', transition:'background .15s', opacity:loading?.7:1 }}>
+            {loading ? '...' : mode === MODES.login ? 'Se connecter' : mode === MODES.register ? 'Créer mon compte' : 'Envoyer le lien'}
           </button>
         </form>
+
+        <div style={{ marginTop:20, display:'flex', flexDirection:'column', gap:8, alignItems:'center' }}>
+          {mode === MODES.login && <>
+            <button onClick={() => { setMode(MODES.forgot); setMsg({text:'',type:''}) }}
+              style={{ background:'none', border:'none', cursor:'pointer', fontSize:13, color:'#2D5A3D', fontFamily:'inherit' }}>
+              Mot de passe oublié ?
+            </button>
+            <div style={{ fontSize:13, color:'#9E9890' }}>
+              Pas de compte ?{' '}
+              <button onClick={() => { setMode(MODES.register); setMsg({text:'',type:''}) }}
+                style={{ background:'none', border:'none', cursor:'pointer', color:'#2D5A3D', fontFamily:'inherit', fontSize:13, fontWeight:600 }}>
+                Créer un compte
+              </button>
+            </div>
+          </>}
+          {mode !== MODES.login && (
+            <button onClick={() => { setMode(MODES.login); setMsg({text:'',type:''}) }}
+              style={{ background:'none', border:'none', cursor:'pointer', fontSize:13, color:'#2D5A3D', fontFamily:'inherit' }}>
+              ← Retour à la connexion
+            </button>
+          )}
+        </div>
       </div>
     </div>
   )

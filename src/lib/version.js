@@ -1,46 +1,42 @@
-export const VERSION = '2.3.0'
-export const BUILD_DATE = '2025-07-07'
+export const VERSION = '2.4.0'
+export const BUILD_DATE = '2025-07-08'
 
 export const CHANGELOG = [
   {
-    version: '2.3.0', date: '2025-07-07', label: 'Biens et Locataires stabilises',
+    version: '2.4.0', date: '2025-07-08', label: 'Gestion complète des comptes',
     changes: [
-      { type:'fix',  text:'Locataires sans compte desormais visibles dans la liste' },
-      { type:'fix',  text:'Biens : nom du locataire affiche meme sans profil ImmoTrack' },
-      { type:'new',  text:'Biens : creation de locataire inline depuis la fiche bien' },
-      { type:'new',  text:'Biens : fiche expandable avec toutes les infos et historique' },
-      { type:'new',  text:'Biens : un seul bouton Locataire (suppression doublon)' },
-      { type:'new',  text:'Quittances : generation automatique avec notification locataire' },
-      { type:'fix',  text:'Suppression bien : cascade correcte sur FK' },
-      { type:'fix',  text:'Admin : messages clairs sur les limitations de suppression auth' },
+      { type:'new',  text:'Admin : créer des comptes directement (all roles) avec mot de passe provisoire' },
+      { type:'new',  text:'Admin : inviter par email avec rôle et bien optionnel' },
+      { type:'new',  text:'Admin : onglet Associations — assigner locataire→bien, proprio→agence' },
+      { type:'new',  text:'Admin : email visible dans Modifier, cascade suppression corrigée' },
+      { type:'new',  text:'Connexion : récupération de mot de passe oublié par email' },
+      { type:'new',  text:'Tchat communautaire : groupes par immeuble, temps réel, épinglage' },
+      { type:'fix',  text:'CSS global.css : classes réalignées avec Layout.jsx' },
+      { type:'fix',  text:'useLoad : retente automatiquement dès que l\'auth est prête' },
+      { type:'fix',  text:'Dashboard : biens admin chargés correctement' },
     ]
   },
   {
-    version: '2.2.0', date: '2025-07-06', label: 'Stabilisation complete',
+    version: '2.3.0', date: '2025-07-07', label: 'Biens et Locataires enrichis',
     changes: [
-      { type:'fix',  text:'Chargement infini : reload au retour sur onglet (30s seuil)' },
-      { type:'fix',  text:'Resize plan 2D : window.mousemove, aucun conflit pointer' },
-      { type:'new',  text:'Plan 2D : indicateur resize visible sur pieces selectionnees' },
-      { type:'new',  text:'Toutes les pages utilisent useCallback + load direct' },
-      { type:'new',  text:'Locataires : section comptes sans logement attribue' },
+      { type:'fix',  text:'Locataires sans compte visibles dans la liste' },
+      { type:'new',  text:'Biens : création locataire inline, fiche expandable avec historique' },
+      { type:'new',  text:'Quittances : génération automatique avec notification' },
     ]
   },
   {
-    version: '2.1.0', date: '2025-07-05', label: 'Ergonomie et corrections',
+    version: '2.2.0', date: '2025-07-06', label: 'Stabilisation',
     changes: [
-      { type:'fix',  text:'Login sans refresh de page' },
-      { type:'new',  text:'4 roles : locataire, proprietaire, agence, admin' },
-      { type:'new',  text:'Messagerie temps reel' },
-      { type:'new',  text:'Prestataires 14 specialites predefinies' },
+      { type:'fix',  text:'Resize plan 2D : window.mousemove sans conflit' },
+      { type:'fix',  text:'Chargement infini résolu (bfcache + visibilitychange)' },
     ]
   },
   {
-    version: '2.0.0', date: '2025-07-04', label: 'Reecriture complete v2',
+    version: '2.0.0', date: '2025-07-04', label: 'Réécriture complète',
     changes: [
-      { type:'new',  text:'Architecture AuthContext sans race condition' },
-      { type:'new',  text:'Responsive mobile : sidebar + hamburger + bottom nav' },
-      { type:'new',  text:'Plan 2D interactif multi-niveaux avec equipements' },
-      { type:'new',  text:'Catalogue 200+ types de pannes' },
+      { type:'new',  text:'React 18 + Supabase v2 + Vercel' },
+      { type:'new',  text:'Plan 2D SVG drag+resize multi-niveaux' },
+      { type:'new',  text:'Catalogue 200+ équipements et pannes' },
     ]
   },
 ]
