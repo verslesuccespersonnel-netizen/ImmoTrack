@@ -1,40 +1,45 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useAuth } from './AuthContext'
 
-// Hook générique pour charger des données en attendant que l'auth soit prête
-export function useLoad(fetcher, deps = []) {
+export function useLoad(fetcher, deps) {
   const { loading: authLoading } = useAuth()
   const [data,    setData]    = useState(null)
   const [loading, setLoading] = useState(true)
   const [error,   setError]   = useState(null)
-  const ctrlRef = useRef(null)
+  const ctrlRef    = useRef(null)
+  const fetcherRef = useRef(fetcher)
+  const depsKey    = JSON.stringify(deps || [])
+  fetcherRef.current = fetcher
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const run = useCallback(async () => {
-    // Ne pas charger tant que l'auth n'est pas prête
-    if (authLoading) return
+  useEffect(() => {
+    if (authLoading) {
+      setLoading(true)
+      return
+    }
     if (ctrlRef.current) ctrlRef.current.abort()
     const ctrl = new AbortController()
     ctrlRef.current = ctrl
-    setLoading(true); setError(null)
+    setLoading(true)
+    setError(null)
     const t = setTimeout(() => ctrl.abort('timeout'), 10000)
-    try {
-      const result = await fetcher(ctrl.signal)
-      if (ctrl.signal.aborted) return
-      setData(result)
-    } catch(e) {
-      if (ctrl.signal.aborted) return
-      setError(e.message)
-    } finally {
-      clearTimeout(t)
-      if (!ctrl.signal.aborted) setLoading(false)
-    }
-  }, [authLoading, ...deps]) // authLoading dans les deps = retry quand auth prêt
+    fetcherRef.current(ctrl.signal)
+      .then(result => { if (!ctrl.signal.aborted) setData(result) })
+      .catch(e => { if (!ctrl.signal.aborted) setError(e.message) })
+      .finally(() => { clearTimeout(t); if (!ctrl.signal.aborted) setLoading(false) })
+    return () => { ctrl.abort() }
+  }, [authLoading, depsKey]) // depsKey = JSON stable, pas de spread
 
-  useEffect(() => {
-    run()
-    return () => { if (ctrlRef.current) ctrlRef.current.abort() }
-  }, [run])
+  function reload() {
+    if (ctrlRef.current) ctrlRef.current.abort()
+    const ctrl = new AbortController()
+    ctrlRef.current = ctrl
+    setLoading(true)
+    setError(null)
+    fetcherRef.current(ctrl.signal)
+      .then(result => { if (!ctrl.signal.aborted) setData(result) })
+      .catch(e => { if (!ctrl.signal.aborted) setError(e.message) })
+      .finally(() => { if (!ctrl.signal.aborted) setLoading(false) })
+  }
 
-  return { data, loading, error, reload: run }
+  return { data, loading, error, reload }
 }
