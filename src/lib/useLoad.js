@@ -3,7 +3,7 @@ import { useAuth } from './AuthContext'
 
 export function useLoad(fetcher, deps) {
   const { loading: authLoading } = useAuth()
-  const [data,    setData]    = useState(null)
+  const [data,    setData]    = useState(undefined)
   const [loading, setLoading] = useState(true)
   const [error,   setError]   = useState(null)
   const ctrlRef    = useRef(null)
@@ -27,7 +27,7 @@ export function useLoad(fetcher, deps) {
       .catch(e => { if (!ctrl.signal.aborted) setError(e.message) })
       .finally(() => { clearTimeout(t); if (!ctrl.signal.aborted) setLoading(false) })
     return () => { ctrl.abort() }
-  }, [authLoading, depsKey]) // depsKey = JSON stable, pas de spread
+  }, [authLoading, depsKey])
 
   function reload() {
     if (ctrlRef.current) ctrlRef.current.abort()

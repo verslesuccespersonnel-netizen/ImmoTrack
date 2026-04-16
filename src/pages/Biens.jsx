@@ -16,7 +16,8 @@ export default function Biens() {
   const { session, profile } = useAuth()
   const navigate  = useNavigate()
   const [biens,      setBiens]      = useState([])
-  const [locataires, setLocataires] = useState([])  // profils role=locataire
+  const [locataires, setLocataires] = useState([])
+  const [proprietaires, setProprietaires] = useState([])  // profils role=locataire
   const [expanded,   setExpanded]   = useState(null)
   const [loading,    setLoading]    = useState(true)
   const [error,      setError]      = useState(null)
@@ -32,7 +33,7 @@ export default function Biens() {
     setLoading(true); setError(null)
     try {
       const isAdmin = profile.role === 'admin'
-      const [bR, lR] = await Promise.all([
+      const [bR, lR, pR] = await Promise.all([
         isAdmin
           ? supabase.from('biens').select(`
               *, 
@@ -53,9 +54,11 @@ export default function Biens() {
               )
             `).eq('proprietaire_id', session.user.id).order('created_at', { ascending: false }),
         supabase.from('profiles').select('id, nom, prenom, telephone, email').eq('role', 'locataire'),
+        supabase.from('profiles').select('id, nom, prenom').in('role', ['proprietaire','gestionnaire']),
       ])
       setBiens(bR.data || [])
       setLocataires(lR.data || [])
+      setProprietaires(pR.data || [])
     } catch(e) { setError(e.message) }
     finally { setLoading(false) }
   }, [session?.user?.id, profile?.role])
@@ -67,6 +70,7 @@ export default function Biens() {
   async function saveBien() {
     if (!form.adresse || !form.ville) { setFormErr('Adresse et ville requises'); return }
     setSaving(true); setFormErr('')
+    const isAdmin = profile?.role === 'admin'
     try {
       if (modalBien.id) {
         await supabase.from('biens').update({
@@ -78,15 +82,17 @@ export default function Biens() {
           description: form.description || null,
         }).eq('id', modalBien.id)
       } else {
-        await supabase.from('biens').insert({
+        const propId = (isAdmin && form.proprio_id) ? form.proprio_id : session.user.id
+        const { error: insErr } = await supabase.from('biens').insert({
           adresse: form.adresse, ville: form.ville,
           code_postal: form.code_postal || null,
           type_bien: form.type_bien || null,
           surface_m2: form.surface_m2 ? Number(form.surface_m2) : null,
           nb_pieces: form.nb_pieces ? Number(form.nb_pieces) : null,
           description: form.description || null,
-          proprietaire_id: session.user.id,
+          proprietaire_id: propId,
         })
+        if (insErr) throw insErr
       }
       setModalBien(null); await load()
     } catch(e) { setFormErr(e.message) }
@@ -372,6 +378,15 @@ export default function Biens() {
                 <div className="fld"><label>Nb pieces</label><input type="number" value={form.nb_pieces||''} onChange={e=>set('nb_pieces',e.target.value)}/></div>
               </div>
               <div className="fld"><label>Description / Notes</label><textarea value={form.description||''} onChange={e=>set('description',e.target.value)} style={{minHeight:60}}/></div>
+              {profile?.role === 'admin' && !modalBien.id && (
+                <div className="fld">
+                  <label>Propriétaire du bien</label>
+                  <select value={form.proprio_id||''} onChange={e=>set('proprio_id',e.target.value)}>
+                    <option value="">Moi-même (admin)</option>
+                    {proprietaires.map(p => <option key={p.id} value={p.id}>{p.prenom} {p.nom}</option>)}
+                  </select>
+                </div>
+              )}
               <button className="btn btn-primary" onClick={saveBien} disabled={saving}>{saving ? 'Enregistrement...' : 'Enregistrer'}</button>
             </div>
           </div>
