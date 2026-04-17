@@ -78,7 +78,6 @@ export default function Biens() {
           code_postal: form.code_postal || null,
           type_bien: form.type_bien || null,
           surface_m2: form.surface_m2 ? Number(form.surface_m2) : null,
-          nb_pieces: form.nb_pieces ? Number(form.nb_pieces) : null,
           description: form.description || null,
         }).eq('id', modalBien.id)
       } else {
@@ -88,7 +87,6 @@ export default function Biens() {
           code_postal: form.code_postal || null,
           type_bien: form.type_bien || null,
           surface_m2: form.surface_m2 ? Number(form.surface_m2) : null,
-          nb_pieces: form.nb_pieces ? Number(form.nb_pieces) : null,
           description: form.description || null,
           proprietaire_id: propId,
         })
@@ -375,7 +373,6 @@ export default function Biens() {
               </div>
               <div className="grid2">
                 <div className="fld"><label>Surface (m2)</label><input type="number" value={form.surface_m2||''} onChange={e=>set('surface_m2',e.target.value)}/></div>
-                <div className="fld"><label>Nb pieces</label><input type="number" value={form.nb_pieces||''} onChange={e=>set('nb_pieces',e.target.value)}/></div>
               </div>
               <div className="fld"><label>Description / Notes</label><textarea value={form.description||''} onChange={e=>set('description',e.target.value)} style={{minHeight:60}}/></div>
               {profile?.role === 'admin' && !modalBien.id && (

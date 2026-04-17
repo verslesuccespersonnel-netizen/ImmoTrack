@@ -31,7 +31,7 @@ export default function Tchat() {
         // MGR : tous les groupes créés par eux ou liés à leurs biens
         const { data: d } = await supabase
           .from('tchat_groupes')
-          .select('*, tchat_membres(count), biens(adresse,ville)')
+          .select('*, biens(adresse,ville)')
           .eq('cree_par', session.user.id)
           .order('created_at', { ascending: false })
         data = d || []

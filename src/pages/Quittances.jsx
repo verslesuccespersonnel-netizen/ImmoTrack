@@ -216,23 +216,24 @@ export default function Quittances() {
       }
 
       // Enregistrer dans la table documents
+      const metaStr = JSON.stringify({
+        location_id:     form.location_id,
+        locataire_id:    form.locataire_id,
+        mois:            form.mois,
+        annee:           form.annee,
+        loyer:           form.loyer,
+        charges:         form.charges,
+        remise:          form.remise,
+        statut_paiement: form.statut_paiement,
+      })
       const { data: doc, error: docErr } = await supabase.from('documents').insert({
-        nom:          nomFichier,
-        type:         'Quittance',
-        url:          urlDoc,
-        bien_id:      form.bien_id,
-        uploaded_by:  session.user.id,
-        favori:       false,
-        meta: JSON.stringify({
-          location_id:     form.location_id,
-          locataire_id:    form.locataire_id,
-          mois:            form.mois,
-          annee:           form.annee,
-          loyer:           form.loyer,
-          charges:         form.charges,
-          remise:          form.remise,
-          statut_paiement: form.statut_paiement,
-        }),
+        nom:         nomFichier,
+        type:        'Quittance',
+        url:         urlDoc,
+        bien_id:     form.bien_id,
+        uploaded_by: session.user.id,
+        favori:      false,
+        meta:        metaStr,
       }).select().single()
 
       if (docErr) throw docErr
