@@ -14,7 +14,7 @@ export default function Incidents() {
 
   const { data:items=[], loading, error, reload } = useLoad(async () => {
     if (!session?.user) return []
-    let q = supabase.from('incidents').select('*,biens(adresse,ville),profiles!signale_par(nom,prenom),medias(id)').order('created_at',{ascending:false})
+    let q = supabase.from('incidents').select('*,biens(adresse,ville),profiles!signale_par(nom,prenom)').order('created_at',{ascending:false})
     if (profile?.role==='locataire') q = q.eq('signale_par', session.user.id)
     const {data} = await q.limit(100)
     return data || []
@@ -48,7 +48,7 @@ export default function Incidents() {
             <span style={{fontSize:18}}>{G_ICON[inc.gravite]||'⚪'}</span>
             <div style={{flex:1,minWidth:0}}>
               <div style={{fontWeight:500,fontSize:13,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{inc.titre}</div>
-              <div style={{fontSize:11,color:'#9E9890'}}>{inc.biens?.adresse} · {inc.profiles?.prenom} {inc.profiles?.nom} · {new Date(inc.created_at).toLocaleDateString('fr-FR')}{inc.medias?.length>0?` · 📎${inc.medias.length}`:''}</div>
+              <div style={{fontSize:11,color:'#9E9890'}}>{inc.biens?.adresse} · {inc.profiles?.prenom} {inc.profiles?.nom} · {new Date(inc.created_at).toLocaleDateString('fr-FR')}</div>
             </div>
             <span className={`status ${S_COLOR[inc.statut]||'status-grey'}`}>{inc.statut.replace('_',' ')}</span>
           </div>

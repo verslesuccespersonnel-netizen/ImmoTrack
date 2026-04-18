@@ -1,0 +1,746 @@
+{
+  "titre": "ImmoTrack — Rapport d'audit complet",
+  "version": "2.4.0",
+  "date": "2026-04-18 07:35",
+  "stack": {
+    "frontend": "React 18 (Create React App)",
+    "routing": "React Router v6",
+    "backend": "Supabase (PostgreSQL + Auth + Storage + Realtime)",
+    "deployment": "Vercel",
+    "url": "https://immotrack-nine.vercel.app"
+  },
+  "roles": {
+    "locataire": "Voir son logement, signaler incidents, messagerie, documents, quittances, tchat",
+    "proprietaire": "Gérer ses biens, locataires, incidents, prestataires, quittances, catalogue",
+    "agence": "Même droits que propriétaire sur ses biens liés",
+    "admin": "Accès total, gestion comptes, créer/assigner/supprimer tout"
+  },
+  "pages": {
+    "Auth.jsx": {
+      "route": "/connexion",
+      "roles": [
+        "all"
+      ],
+      "description": "Connexion, inscription, mot de passe oublié",
+      "tables_lues": [],
+      "operations_db": [],
+      "problemes_db": [],
+      "statut": "✅ OK"
+    },
+    "Dashboard.jsx": {
+      "route": "/",
+      "roles": [
+        "all"
+      ],
+      "description": "Tableau de bord adapté au rôle (stats, incidents, biens)",
+      "tables_lues": [
+        "biens",
+        "documents",
+        "incidents",
+        "locations",
+        "messages"
+      ],
+      "operations_db": [],
+      "problemes_db": [],
+      "statut": "✅ OK"
+    },
+    "Biens.jsx": {
+      "route": "/biens",
+      "roles": [
+        "proprietaire",
+        "agence",
+        "admin"
+      ],
+      "description": "CRUD biens, attribution locataires, plan 2D",
+      "tables_lues": [
+        "biens",
+        "garants",
+        "incidents",
+        "locations",
+        "occupants",
+        "plan_equipements",
+        "plan_pieces",
+        "profiles"
+      ],
+      "operations_db": [
+        "update locations",
+        "delete biens",
+        "insert locations",
+        "insert biens",
+        "delete locations",
+        "delete plan_equipements",
+        "delete plan_pieces",
+        "delete garants",
+        "update biens",
+        "insert occupants",
+        "delete incidents",
+        "delete occupants"
+      ],
+      "problemes_db": [],
+      "statut": "✅ OK"
+    },
+    "PlanBien.jsx": {
+      "route": "/biens/:id/plan",
+      "roles": [
+        "proprietaire",
+        "agence",
+        "admin"
+      ],
+      "description": "Plan 2D SVG interactif, drag+resize pièces, équipements",
+      "tables_lues": [
+        "biens",
+        "plan_equipements",
+        "plan_pieces"
+      ],
+      "operations_db": [
+        "insert plan_pieces",
+        "insert plan_equipements",
+        "delete plan_equipements",
+        "update plan_pieces",
+        "update plan_equipements",
+        "delete plan_pieces"
+      ],
+      "problemes_db": [],
+      "statut": "✅ OK"
+    },
+    "Locataires.jsx": {
+      "route": "/locataires",
+      "roles": [
+        "proprietaire",
+        "agence",
+        "admin"
+      ],
+      "description": "Gestion locataires, occupants, garants, locations",
+      "tables_lues": [
+        "biens",
+        "garants",
+        "invitations",
+        "locations",
+        "occupants",
+        "profiles"
+      ],
+      "operations_db": [
+        "update locations",
+        "insert locations",
+        "insert invitations",
+        "delete locations",
+        "delete garants",
+        "insert garants",
+        "insert occupants",
+        "delete occupants"
+      ],
+      "problemes_db": [],
+      "statut": "✅ OK"
+    },
+    "Incidents.jsx": {
+      "route": "/incidents",
+      "roles": [
+        "all"
+      ],
+      "description": "Liste et suivi des incidents par rôle",
+      "tables_lues": [
+        "incidents"
+      ],
+      "operations_db": [
+        "update incidents"
+      ],
+      "problemes_db": [],
+      "statut": "✅ OK"
+    },
+    "Signaler.jsx": {
+      "route": "/signaler",
+      "roles": [
+        "all"
+      ],
+      "description": "Formulaire signalement incident",
+      "tables_lues": [
+        "biens",
+        "catalogue_equipements",
+        "incidents",
+        "locations"
+      ],
+      "operations_db": [
+        "insert incidents"
+      ],
+      "problemes_db": [],
+      "statut": "✅ OK"
+    },
+    "Documents.jsx": {
+      "route": "/documents",
+      "roles": [
+        "all"
+      ],
+      "description": "Upload et gestion documents par bien",
+      "tables_lues": [
+        "biens",
+        "documents",
+        "profiles"
+      ],
+      "operations_db": [
+        "insert documents",
+        "update documents",
+        "delete documents"
+      ],
+      "problemes_db": [],
+      "statut": "✅ OK"
+    },
+    "Messages.jsx": {
+      "route": "/messages",
+      "roles": [
+        "all"
+      ],
+      "description": "Messagerie temps réel entre utilisateurs",
+      "tables_lues": [
+        "messages",
+        "profiles"
+      ],
+      "operations_db": [
+        "insert messages",
+        "update messages"
+      ],
+      "problemes_db": [],
+      "statut": "✅ OK"
+    },
+    "Quittances.jsx": {
+      "route": "/quittances",
+      "roles": [
+        "proprietaire",
+        "agence",
+        "admin"
+      ],
+      "description": "Génération quittances HTML, archivage, notification",
+      "tables_lues": [
+        "biens",
+        "documents",
+        "locations",
+        "messages"
+      ],
+      "operations_db": [
+        "insert documents",
+        "insert messages"
+      ],
+      "problemes_db": [],
+      "statut": "✅ OK"
+    },
+    "Prestataires.jsx": {
+      "route": "/prestataires",
+      "roles": [
+        "proprietaire",
+        "agence",
+        "admin"
+      ],
+      "description": "Annuaire artisans/sociétés, fiche détaillée, association biens",
+      "tables_lues": [
+        "biens",
+        "prestataire_biens",
+        "prestataires"
+      ],
+      "operations_db": [
+        "delete prestataire_biens",
+        "insert prestataire_biens",
+        "delete prestataires",
+        "update prestataires",
+        "insert prestataires"
+      ],
+      "problemes_db": [],
+      "statut": "✅ OK"
+    },
+    "Catalogue.jsx": {
+      "route": "/catalogue",
+      "roles": [
+        "proprietaire",
+        "agence",
+        "admin"
+      ],
+      "description": "Catalogue zones/pièces/équipements/pannes",
+      "tables_lues": [
+        "catalogue_equipements",
+        "catalogue_pannes",
+        "catalogue_pieces",
+        "catalogue_zones"
+      ],
+      "operations_db": [],
+      "problemes_db": [],
+      "statut": "✅ OK"
+    },
+    "Admin.jsx": {
+      "route": "/admin",
+      "roles": [
+        "proprietaire",
+        "agence",
+        "admin"
+      ],
+      "description": "Gestion comptes, associations, outils, export",
+      "tables_lues": [
+        "agence_proprietaires",
+        "biens",
+        "documents",
+        "garants",
+        "incidents",
+        "invitations",
+        "locations",
+        "messages",
+        "occupants",
+        "plan_equipements",
+        "plan_pieces",
+        "profiles",
+        "tchat_membres",
+        "tchat_messages"
+      ],
+      "operations_db": [
+        "update incidents",
+        "insert locations",
+        "upsert agence_proprietaires",
+        "delete plan_equipements",
+        "delete profiles",
+        "delete messages",
+        "delete garants",
+        "upsert profiles",
+        "delete locations",
+        "delete occupants",
+        "delete biens",
+        "update profiles",
+        "delete tchat_membres",
+        "delete documents",
+        "insert invitations",
+        "delete tchat_messages",
+        "update locations",
+        "delete plan_pieces",
+        "delete incidents"
+      ],
+      "problemes_db": [],
+      "statut": "✅ OK"
+    },
+    "Tchat.jsx": {
+      "route": "/tchat",
+      "roles": [
+        "all"
+      ],
+      "description": "Tchat communautaire par groupe/immeuble, temps réel",
+      "tables_lues": [
+        "biens",
+        "profiles",
+        "tchat_groupes",
+        "tchat_membres",
+        "tchat_messages"
+      ],
+      "operations_db": [
+        "insert tchat_groupes",
+        "delete tchat_membres",
+        "update tchat_messages",
+        "delete tchat_messages",
+        "insert tchat_membres",
+        "insert tchat_messages"
+      ],
+      "problemes_db": [],
+      "statut": "✅ OK"
+    },
+    "Demo.jsx": {
+      "route": "/demo",
+      "roles": [
+        "all"
+      ],
+      "description": "Guide interactif par rôle",
+      "tables_lues": [],
+      "operations_db": [],
+      "problemes_db": [],
+      "statut": "✅ OK"
+    }
+  },
+  "schema": {
+    "biens": [
+      "adresse",
+      "code_postal",
+      "created_at",
+      "description",
+      "id",
+      "proprietaire_id",
+      "surface_m2",
+      "type_bien",
+      "ville"
+    ],
+    "catalogue_equipements": [
+      "icone",
+      "id",
+      "nom",
+      "ordre",
+      "piece_id",
+      "type"
+    ],
+    "catalogue_pannes": [
+      "description",
+      "equipement_id",
+      "gravite_defaut",
+      "id",
+      "ordre"
+    ],
+    "catalogue_pieces": [
+      "icone",
+      "id",
+      "nom",
+      "ordre",
+      "zone_id"
+    ],
+    "catalogue_zones": [
+      "icone",
+      "id",
+      "nom",
+      "ordre"
+    ],
+    "documents": [
+      "bien_id",
+      "created_at",
+      "favori",
+      "id",
+      "meta",
+      "nom",
+      "type",
+      "uploaded_by",
+      "url"
+    ],
+    "garants": [
+      "adresse",
+      "created_at",
+      "email",
+      "id",
+      "lien",
+      "location_id",
+      "montant",
+      "nom",
+      "prenom",
+      "telephone",
+      "type_caution"
+    ],
+    "incidents": [
+      "bien_id",
+      "created_at",
+      "description",
+      "equipement_id",
+      "gravite",
+      "id",
+      "signale_par",
+      "statut",
+      "titre"
+    ],
+    "invitations": [
+      "bien_id",
+      "created_at",
+      "cree_par",
+      "date_debut",
+      "email",
+      "id",
+      "loyer",
+      "nom",
+      "prenom",
+      "role",
+      "telephone",
+      "type_contrat"
+    ],
+    "locations": [
+      "bien_id",
+      "charges",
+      "created_at",
+      "date_debut",
+      "date_fin",
+      "depot_garantie",
+      "id",
+      "locataire_id",
+      "loyer_mensuel",
+      "statut",
+      "type_contrat"
+    ],
+    "messages": [
+      "contenu",
+      "created_at",
+      "destinataire",
+      "expediteur",
+      "id",
+      "lu"
+    ],
+    "occupants": [
+      "created_at",
+      "date_naissance",
+      "id",
+      "lien",
+      "location_id",
+      "nom",
+      "prenom"
+    ],
+    "plan_equipements": [
+      "bien_id",
+      "categorie",
+      "couleur",
+      "created_at",
+      "etage",
+      "grid_x",
+      "grid_y",
+      "icone",
+      "id",
+      "nom",
+      "notes",
+      "plan_piece_id"
+    ],
+    "plan_pieces": [
+      "bien_id",
+      "couleur",
+      "created_at",
+      "etage",
+      "h",
+      "icone",
+      "id",
+      "nom",
+      "w",
+      "x",
+      "y"
+    ],
+    "prestataire_biens": [
+      "bien_id",
+      "created_at",
+      "id",
+      "prestataire_id"
+    ],
+    "prestataires": [
+      "adresse",
+      "assurance",
+      "created_at",
+      "cree_par",
+      "disponibilite",
+      "email",
+      "id",
+      "nom",
+      "notes",
+      "prenom",
+      "siret",
+      "site_web",
+      "societe",
+      "specialite",
+      "tarif_horaire",
+      "telephone",
+      "telephone2",
+      "ville"
+    ],
+    "profiles": [
+      "adresse",
+      "agence_id",
+      "code_postal",
+      "created_at",
+      "email",
+      "id",
+      "nom",
+      "nom_societe",
+      "notes",
+      "prenom",
+      "role",
+      "telephone",
+      "telephone2",
+      "ville"
+    ],
+    "tchat_groupes": [
+      "bien_id",
+      "created_at",
+      "cree_par",
+      "description",
+      "id",
+      "nom"
+    ],
+    "tchat_membres": [
+      "created_at",
+      "groupe_id",
+      "id",
+      "role_membre",
+      "user_id"
+    ],
+    "tchat_messages": [
+      "contenu",
+      "created_at",
+      "epingle",
+      "groupe_id",
+      "id",
+      "user_id"
+    ]
+  },
+  "relations": [
+    {
+      "de": "auth.users",
+      "cardinalite": "1:1",
+      "vers": "profiles",
+      "via": "Trigger handle_new_user"
+    },
+    {
+      "de": "profiles (proprietaire)",
+      "cardinalite": "1:N",
+      "vers": "biens",
+      "via": "biens.proprietaire_id"
+    },
+    {
+      "de": "biens",
+      "cardinalite": "1:N",
+      "vers": "locations",
+      "via": "locations.bien_id"
+    },
+    {
+      "de": "profiles (locataire)",
+      "cardinalite": "1:N",
+      "vers": "locations",
+      "via": "locations.locataire_id"
+    },
+    {
+      "de": "locations",
+      "cardinalite": "1:N",
+      "vers": "occupants",
+      "via": "occupants.location_id"
+    },
+    {
+      "de": "locations",
+      "cardinalite": "1:N",
+      "vers": "garants",
+      "via": "garants.location_id"
+    },
+    {
+      "de": "biens",
+      "cardinalite": "1:N",
+      "vers": "incidents",
+      "via": "incidents.bien_id"
+    },
+    {
+      "de": "biens",
+      "cardinalite": "1:N",
+      "vers": "documents",
+      "via": "documents.bien_id"
+    },
+    {
+      "de": "biens",
+      "cardinalite": "1:N",
+      "vers": "plan_pieces",
+      "via": "plan_pieces.bien_id"
+    },
+    {
+      "de": "plan_pieces",
+      "cardinalite": "1:N",
+      "vers": "plan_equipements",
+      "via": "plan_equipements.plan_piece_id"
+    },
+    {
+      "de": "prestataires",
+      "cardinalite": "N:M",
+      "vers": "biens",
+      "via": "via prestataire_biens"
+    },
+    {
+      "de": "profiles",
+      "cardinalite": "N:M",
+      "vers": "tchat_groupes",
+      "via": "via tchat_membres"
+    },
+    {
+      "de": "tchat_groupes",
+      "cardinalite": "1:N",
+      "vers": "tchat_messages",
+      "via": "tchat_messages.groupe_id"
+    },
+    {
+      "de": "catalogue_zones",
+      "cardinalite": "1:N",
+      "vers": "catalogue_pieces",
+      "via": "catalogue_pieces.zone_id"
+    },
+    {
+      "de": "catalogue_pieces",
+      "cardinalite": "1:N",
+      "vers": "catalogue_equipements",
+      "via": "catalogue_equipements.piece_id"
+    },
+    {
+      "de": "catalogue_equipements",
+      "cardinalite": "1:N",
+      "vers": "catalogue_pannes",
+      "via": "catalogue_pannes.equipement_id"
+    }
+  ],
+  "flux_metier": {
+    "creation_bien": [
+      "Admin/Proprio: Biens > + Ajouter",
+      "Saisir adresse, ville, type, surface (pas nb_pieces)",
+      "Admin peut choisir le propriétaire dans la liste",
+      "INSERT biens (proprietaire_id = choix ou session.user.id)",
+      "Bien visible dans liste + dashboard"
+    ],
+    "attribution_locataire": [
+      "Biens > fiche > + Locataire",
+      "Onglet \"Existant\": sélectionner profil role=locataire",
+      "Onglet \"Nouveau\": créer occupant sans compte (locataire_id=null)",
+      "INSERT locations (bien_id, locataire_id, loyer_mensuel, date_debut)",
+      "INSERT occupants si nouveau (titulaire)",
+      "Locataire visible dans Biens (nom) et Locataires"
+    ],
+    "signalement_incident": [
+      "Signaler > choisir bien (filtre par rôle)",
+      "Choisir équipement (catalogue_equipements optionnel)",
+      "Renseigner titre, description, gravité",
+      "INSERT incidents (bien_id, signale_par, titre, gravite, statut=nouveau)",
+      "Visible dans Incidents + Dashboard"
+    ],
+    "generation_quittance": [
+      "Quittances > sélectionner location active",
+      "Renseigner mois, année, loyer, charges",
+      "Génération HTML côté client",
+      "Upload vers Supabase Storage",
+      "INSERT documents (nom, type=Quittance, url, bien_id, meta=JSON)",
+      "INSERT messages (notification automatique au locataire)"
+    ],
+    "plan_2d": [
+      "Biens > Plan",
+      "Palette gauche: cliquer une pièce → INSERT plan_pieces",
+      "Cliquer pièce pour la sélectionner (fond vert)",
+      "Drag rect: déplacer (UPDATE plan_pieces x,y)",
+      "Coin vert ↘: RESIZE (UPDATE plan_pieces w,h) via window events",
+      "Double-clic: éditer nom/icône/couleur",
+      "Onglet 🔧: ajouter équipements (INSERT plan_equipements)",
+      "Équipements drag-déplaçables librement"
+    ],
+    "tchat_communautaire": [
+      "Proprio/Admin: Tchat > + Nouveau groupe",
+      "Nommer, décrire, lier optionnellement à un bien",
+      "Ajouter locataires comme membres depuis le panneau Membres",
+      "Messages temps réel via Supabase Realtime",
+      "MGR peut épingler/supprimer les messages"
+    ],
+    "gestion_comptes_admin": [
+      "Admin > Comptes",
+      "Modifier: changer rôle inline ou via modal (email visible)",
+      "Supprimer: cascade profiles+locations+incidents+messages",
+      "+ Créer: compte direct (mot de passe ImmoTrack2024!)",
+      "Inviter: email avec rôle prédéfini",
+      "Associations: locataire→bien (crée location), proprio→agence"
+    ]
+  },
+  "audit_db": {},
+  "problemes_connus": [
+    "Suppression compte: le profil est supprimé mais auth.users reste → supprimer manuellement dans Supabase > Authentication > Users",
+    "tchat_groupes: tchat_membres(count) supprimé (syntaxe PostgREST invalide)",
+    "Quittances: Storage bucket \"documents\" doit exister dans Supabase > Storage",
+    "Invitation email: nécessite que Supabase auth soit configuré avec SMTP personnalisé pour prod"
+  ],
+  "sql_a_executer": [
+    {
+      "fichier": "fix_profiles_email.sql",
+      "description": "Ajoute colonne email à profiles + met à jour trigger handle_new_user",
+      "obligatoire": true
+    },
+    {
+      "fichier": "schema_tchat.sql",
+      "description": "Crée tables tchat_groupes, tchat_membres, tchat_messages + RLS + Realtime",
+      "obligatoire": true
+    },
+    {
+      "fichier": "schema_prestataires.sql",
+      "description": "Ajoute colonnes telephone2/site_web/ville/siret/etc à prestataires + table prestataire_biens",
+      "obligatoire": true
+    },
+    {
+      "fichier": "fix_roles.sql",
+      "description": "Ajoute rôles agence/admin au check constraint de profiles",
+      "obligatoire": true
+    }
+  ]
+}

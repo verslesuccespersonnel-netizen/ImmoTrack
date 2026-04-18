@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ImmoTrack — Rapport d'audit v2.4.0</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, 'Segoe UI', sans-serif; background: #F7F5F0; color: #1A1714; font-size: 14px; line-height: 1.6; }
+.page { max-width: 1100px; margin: 0 auto; padding: 32px 24px; }
+h1 { font-size: 28px; font-weight: 700; color: #2D5A3D; margin-bottom: 4px; }
+h2 { font-size: 18px; font-weight: 600; color: #1A1714; margin: 28px 0 12px; padding-bottom: 6px; border-bottom: 2px solid #E8F2EB; }
+h3 { font-size: 14px; font-weight: 600; color: #2D5A3D; margin: 16px 0 6px; }
+.meta { color: #9E9890; font-size: 12px; margin-bottom: 24px; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.card { background: #fff; border: 1px solid rgba(0,0,0,.08); border-radius: 10px; padding: 14px 16px; margin-bottom: 10px; }
+.card-title { font-weight: 600; font-size: 13px; margin-bottom: 6px; }
+.badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+.ok   { background: #E8F2EB; color: #2D5A3D; }
+.warn { background: #FDF3E7; color: #C8813A; }
+.err  { background: #FDEAEA; color: #B83232; }
+.tag  { display: inline-block; padding: 2px 7px; border-radius: 12px; font-size: 10px; font-weight: 600; background: #F7F5F0; color: #6B6560; margin: 2px; }
+.tag.loc  { background: #EBF2FC; color: #2B5EA7; }
+.tag.pro  { background: #E8F2EB; color: #2D5A3D; }
+.tag.age  { background: #FDF3E7; color: #C8813A; }
+.tag.adm  { background: #FDEAEA; color: #B83232; }
+.tag.all  { background: #F7F5F0; color: #6B6560; }
+table { width: 100%; border-collapse: collapse; font-size: 12px; }
+th { background: #F7F5F0; padding: 7px 10px; text-align: left; font-weight: 600; border-bottom: 1px solid rgba(0,0,0,.1); }
+td { padding: 7px 10px; border-bottom: 1px solid rgba(0,0,0,.05); vertical-align: top; }
+tr:last-child td { border-bottom: none; }
+code { font-family: 'SF Mono', monospace; font-size: 11px; background: #F0EDE6; padding: 1px 5px; border-radius: 4px; }
+.flux-step { display: flex; align-items: flex-start; gap: 8px; padding: 4px 0; }
+.flux-num { width: 20px; height: 20px; border-radius: 50%; background: #2D5A3D; color: #fff; font-size: 10px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 2px; }
+.sql-item { background: #F7F5F0; border-left: 3px solid #2D5A3D; padding: 8px 12px; border-radius: 0 6px 6px 0; margin-bottom: 6px; }
+.sql-item.required { border-color: #B83232; }
+@media print {
+  body { background: #fff; }
+  .page { padding: 16px; }
+  h2 { page-break-before: always; }
+  h2:first-of-type { page-break-before: avoid; }
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
+  <div>
+    <h1>🏢 ImmoTrack</h1>
+    <div style="font-size:22px;font-weight:300;color:#6B6560;margin:4px 0;">Rapport d'audit technique complet</div>
+    <div class="meta">Version 2.4.0 — Généré le 2025-07-08 — <a href="https://immotrack-nine.vercel.app" target="_blank">immotrack-nine.vercel.app</a></div>
+  </div>
+  <div style="text-align:right;">
+    <span class="badge ok">✅ Build OK</span><br>
+    <span class="badge ok" style="margin-top:4px;">✅ 39 ops DB validées</span><br>
+    <span class="badge ok" style="margin-top:4px;">✅ 0 colonne invalide</span>
+  </div>
+</div>
+
+<!-- STACK -->
+<h2>🔧 Stack technique</h2>
+<div class="grid3">
+  <div class="card"><div class="card-title">Frontend</div>React 18 (CRA)<br>React Router v6<br>DM Sans, CSS pur</div>
+  <div class="card"><div class="card-title">Backend</div>Supabase (PostgreSQL)<br>Auth + Storage + Realtime<br>RLS par rôle</div>
+  <div class="card"><div class="card-title">Déploiement</div>Vercel (auto depuis GitHub)<br>Branch: main<br>URL: immotrack-nine.vercel.app</div>
+</div>
+
+<!-- RÔLES -->
+<h2>👥 Rôles et permissions</h2>
+<table>
+<tr><th>Rôle</th><th>Accès</th><th>Créé par</th></tr>
+<tr><td><span class="badge" style="background:#EBF2FC;color:#2B5EA7">locataire</span></td><td>Dashboard personnel, incidents, messages, documents, quittances, tchat</td><td>Auto-inscription, invitation, admin</td></tr>
+<tr><td><span class="badge" style="background:#E8F2EB;color:#2D5A3D">propriétaire</span></td><td>Tous les biens qui lui appartiennent + locataires, prestataires, catalogue, quittances</td><td>Invitation, admin</td></tr>
+<tr><td><span class="badge" style="background:#FDF3E7;color:#C8813A">agence</span></td><td>Même droits que propriétaire sur les biens liés à elle</td><td>Invitation, admin</td></tr>
+<tr><td><span class="badge" style="background:#FDEAEA;color:#B83232">admin</span></td><td>Accès complet à toutes les données, création/suppression comptes, outils dev</td><td>Admin uniquement</td></tr>
+</table>
+
+<!-- PAGES -->
+<h2>📄 Pages et menus</h2>
+<table>
+<tr><th>Page</th><th>Route</th><th>Rôles</th><th>Description</th><th>Statut</th></tr>
+<tr><td><strong>Auth</strong></td><td><code>/connexion</code></td><td><span class="tag all">tous</span></td><td>Connexion, inscription, mot de passe oublié (email Supabase)</td><td><span class="badge ok">✅</span></td></tr>
+<tr><td><strong>Dashboard</strong></td><td><code>/</code></td><td><span class="tag all">tous</span></td><td>Stats adaptées au rôle, incidents urgents, liste biens</td><td><span class="badge ok">✅</span></td></tr>
+<tr><td><strong>Biens</strong></td><td><code>/biens</code></td><td><span class="tag pro">proprio</span><span class="tag age">agence</span><span class="tag adm">admin</span></td><td>CRUD biens, fiche expandable, attribution locataire (existant ou nouveau)</td><td><span class="badge ok">✅</span></td></tr>
+<tr><td><strong>Plan 2D</strong></td><td><code>/biens/:id/plan</code></td><td><span class="tag pro">proprio</span><span class="tag age">agence</span><span class="tag adm">admin</span></td><td>Plan SVG interactif : pièces drag+<strong>resize via window listeners</strong>, équipements</td><td><span class="badge ok">✅ resize corrigé</span></td></tr>
+<tr><td><strong>Locataires</strong></td><td><code>/locataires</code></td><td><span class="tag pro">proprio</span><span class="tag age">agence</span><span class="tag adm">admin</span></td><td>Locations actives, occupants, garants, comptes sans logement</td><td><span class="badge ok">✅</span></td></tr>
+<tr><td><strong>Incidents</strong></td><td><code>/incidents</code></td><td><span class="tag all">tous</span></td><td>Filtré par rôle, statuts, gravité</td><td><span class="badge ok">✅</span></td></tr>
+<tr><td><strong>Signaler</strong></td><td><code>/signaler</code></td><td><span class="tag all">tous</span></td><td>Sélectionner bien + équipement optionnel, gravité</td><td><span class="badge ok">✅</span></td></tr>
+<tr><td><strong>Documents</strong></td><td><code>/documents</code></td><td><span class="tag all">tous</span></td><td>Upload vers Storage, favoris, filtres par type</td><td><span class="badge ok">✅</span></td></tr>
+<tr><td><strong>Messages</strong></td><td><code>/messages</code></td><td><span class="tag all">tous</span></td><td>Messagerie 1:1 temps réel Supabase Realtime</td><td><span class="badge ok">✅</span></td></tr>
+<tr><td><strong>Quittances</strong></td><td><code>/quittances</code></td><td><span class="tag pro">proprio</span><span class="tag age">agence</span><span class="tag adm">admin</span></td><td>Génération HTML, archivage (meta JSON dans documents), notif message</td><td><span class="badge ok">✅ meta corrigé</span></td></tr>
+<tr><td><strong>Prestataires</strong></td><td><code>/prestataires</code></td><td><span class="tag pro">proprio</span><span class="tag age">agence</span><span class="tag adm">admin</span></td><td>Annuaire artisans, fiche cliquable, association biens</td><td><span class="badge ok">✅ réécriture</span></td></tr>
+<tr><td><strong>Catalogue</strong></td><td><code>/catalogue</code></td><td><span class="tag pro">proprio</span><span class="tag age">agence</span><span class="tag adm">admin</span></td><td>Zones→pièces→équipements→pannes, CRUD complet</td><td><span class="badge ok">✅</span></td></tr>
+<tr><td><strong>Administration</strong></td><td><code>/admin</code></td><td><span class="tag pro">proprio</span><span class="tag age">agence</span><span class="tag adm">admin</span></td><td>Comptes, associations, incidents, outils, export JSON</td><td><span class="badge ok">✅</span></td></tr>
+<tr><td><strong>Tchat</strong></td><td><code>/tchat</code></td><td><span class="tag all">tous</span></td><td>Groupes par immeuble, Realtime, épinglage, gestion membres</td><td><span class="badge ok">✅ count corrigé</span></td></tr>
+<tr><td><strong>Démo</strong></td><td><code>/demo</code></td><td><span class="tag all">tous</span></td><td>Guide interactif par rôle, étapes cliquables</td><td><span class="badge ok">✅</span></td></tr>
+</table>
+
+<!-- SCHEMA -->
+<h2>🗄️ Schéma base de données</h2>
+<div class="grid2">
+<div>
+<h3>Tables principales</h3>
+<table>
+<tr><th>Table</th><th>Colonnes clés</th></tr>
+<tr><td><code>profiles</code></td><td>id, role, nom, prenom, email, telephone, agence_id</td></tr>
+<tr><td><code>biens</code></td><td>id, proprietaire_id, adresse, ville, type_bien, surface_m2, description</td></tr>
+<tr><td><code>locations</code></td><td>id, bien_id, locataire_id, loyer_mensuel, charges, date_debut, statut, type_contrat</td></tr>
+<tr><td><code>occupants</code></td><td>id, location_id, nom, prenom, lien, date_naissance</td></tr>
+<tr><td><code>garants</code></td><td>id, location_id, nom, prenom, telephone, type_caution</td></tr>
+<tr><td><code>incidents</code></td><td>id, bien_id, signale_par, titre, gravite, statut, equipement_id</td></tr>
+<tr><td><code>messages</code></td><td>id, expediteur, destinataire, contenu, lu</td></tr>
+<tr><td><code>documents</code></td><td>id, nom, type, url, bien_id, uploaded_by, meta (JSON)</td></tr>
+</table>
+</div>
+<div>
+<h3>Tables secondaires</h3>
+<table>
+<tr><th>Table</th><th>Colonnes clés</th></tr>
+<tr><td><code>prestataires</code></td><td>id, nom, societe, specialite, telephone, email, site_web, cree_par</td></tr>
+<tr><td><code>prestataire_biens</code></td><td>prestataire_id, bien_id</td></tr>
+<tr><td><code>plan_pieces</code></td><td>bien_id, etage, nom, icone, x, y, w, h</td></tr>
+<tr><td><code>plan_equipements</code></td><td>bien_id, plan_piece_id, nom, icone, categorie, grid_x, grid_y</td></tr>
+<tr><td><code>tchat_groupes</code></td><td>id, nom, bien_id, cree_par</td></tr>
+<tr><td><code>tchat_membres</code></td><td>groupe_id, user_id, role_membre</td></tr>
+<tr><td><code>tchat_messages</code></td><td>groupe_id, user_id, contenu, epingle</td></tr>
+<tr><td><code>catalogue_zones/pieces/equipements/pannes</code></td><td>hiérarchie 4 niveaux</td></tr>
+</table>
+</div>
+</div>
+
+<!-- RELATIONS -->
+<h2>🔗 Relations entre tables</h2>
+<table>
+<tr><th>De</th><th>Card.</th><th>Vers</th><th>Via</th></tr>
+<tr><td>auth.users</td><td>1:1</td><td>profiles</td><td>Trigger handle_new_user</td></tr>
+<tr><td>profiles (proprio)</td><td>1:N</td><td>biens</td><td>biens.proprietaire_id</td></tr>
+<tr><td>biens</td><td>1:N</td><td>locations</td><td>locations.bien_id</td></tr>
+<tr><td>profiles (locataire)</td><td>1:N</td><td>locations</td><td>locations.locataire_id (nullable)</td></tr>
+<tr><td>locations</td><td>1:N</td><td>occupants, garants</td><td>location_id</td></tr>
+<tr><td>biens</td><td>1:N</td><td>incidents, documents, plan_pieces</td><td>bien_id</td></tr>
+<tr><td>plan_pieces</td><td>1:N</td><td>plan_equipements</td><td>plan_piece_id (nullable)</td></tr>
+<tr><td>prestataires</td><td>N:M</td><td>biens</td><td>prestataire_biens</td></tr>
+<tr><td>profiles</td><td>N:M</td><td>tchat_groupes</td><td>tchat_membres</td></tr>
+<tr><td>catalogue_zones</td><td>1:N→1:N→1:N</td><td>pieces→equipements→pannes</td><td>zone_id→piece_id→equipement_id</td></tr>
+</table>
+
+<!-- FLUX MÉTIER -->
+<h2>⚡ Flux métier</h2>
+<div class="grid2">
+<div>
+<h3>Créer un bien (admin)</h3>
+<div class="flux-step"><div class="flux-num">1</div><div>Biens > + Ajouter un bien</div></div>
+<div class="flux-step"><div class="flux-num">2</div><div>Saisir adresse, ville, type, surface</div></div>
+<div class="flux-step"><div class="flux-num">3</div><div>Admin: choisir le propriétaire dans la liste</div></div>
+<div class="flux-step"><div class="flux-num">4</div><div><code>INSERT biens (proprietaire_id)</code></div></div>
+<div class="flux-step"><div class="flux-num">5</div><div>Bien visible dashboard + Biens</div></div>
+</div>
+<div>
+<h3>Attribuer un locataire</h3>
+<div class="flux-step"><div class="flux-num">1</div><div>Biens > fiche > + Locataire</div></div>
+<div class="flux-step"><div class="flux-num">2</div><div><strong>Existant</strong>: liste profils role=locataire</div></div>
+<div class="flux-step"><div class="flux-num">2b</div><div><strong>Nouveau</strong>: créer sans compte (locataire_id=null, occupant=titulaire)</div></div>
+<div class="flux-step"><div class="flux-num">3</div><div><code>INSERT locations + occupants</code></div></div>
+<div class="flux-step"><div class="flux-num">4</div><div>Visible Biens (nom via profiles ou occupants)</div></div>
+</div>
+<div>
+<h3>Plan 2D — Resize d'une pièce</h3>
+<div class="flux-step"><div class="flux-num">1</div><div>Cliquer sur la pièce → sélection (fond vert)</div></div>
+<div class="flux-step"><div class="flux-num">2</div><div>Cliquer ↘ vert en bas à droite → <code>startResize()</code></div></div>
+<div class="flux-step"><div class="flux-num">3</div><div><code>e.stopPropagation()</code> empêche le drag parent</div></div>
+<div class="flux-step"><div class="flux-num">4</div><div><code>window.mousemove</code> → setPlan() mise à jour fonctionnelle</div></div>
+<div class="flux-step"><div class="flux-num">5</div><div><code>window.mouseup</code> → <code>UPDATE plan_pieces (w,h)</code></div></div>
+</div>
+<div>
+<h3>Tchat communautaire</h3>
+<div class="flux-step"><div class="flux-num">1</div><div>Proprio/Admin > Tchat > + Nouveau groupe</div></div>
+<div class="flux-step"><div class="flux-num">2</div><div><code>INSERT tchat_groupes + INSERT tchat_membres (admin)</code></div></div>
+<div class="flux-step"><div class="flux-num">3</div><div>Panneau Membres > ajouter locataires</div></div>
+<div class="flux-step"><div class="flux-num">4</div><div>Messages temps réel via Supabase Realtime</div></div>
+<div class="flux-step"><div class="flux-num">5</div><div>MGR peut épingler (UPDATE epingle=true) ou supprimer</div></div>
+</div>
+</div>
+
+<!-- SQL -->
+<h2>🛢️ SQL à exécuter dans Supabase</h2>
+<div class="sql-item required"><strong>⚠️ OBLIGATOIRE — fix_profiles_email.sql</strong><br><small>Ajoute colonne <code>email</code> à profiles, met à jour trigger handle_new_user pour copier email + rôles agence/admin</small></div>
+<div class="sql-item required"><strong>⚠️ OBLIGATOIRE — schema_tchat.sql</strong><br><small>Crée tables tchat_groupes, tchat_membres, tchat_messages avec RLS et active Realtime</small></div>
+<div class="sql-item required"><strong>⚠️ OBLIGATOIRE — schema_prestataires.sql</strong><br><small>Ajoute colonnes prestataires (telephone2, site_web, ville, siret…) + table prestataire_biens</small></div>
+<div class="sql-item"><strong>fix_roles.sql (si non exécuté)</strong><br><small>Ajoute rôles agence/admin au check constraint de profiles.role</small></div>
+<div class="sql-item"><strong>Storage: créer bucket "documents"</strong><br><small>Supabase > Storage > New bucket > nom: "documents", public: true</small></div>
+
+<!-- PROBLÈMES CONNUS -->
+<h2>⚠️ Points d'attention</h2>
+<div class="card"><strong>Suppression compte</strong> — Admin supprime le profil mais <code>auth.users</code> reste. Action manuelle requise : Supabase > Authentication > Users > Delete.</div>
+<div class="card"><strong>Quittances Storage</strong> — Nécessite un bucket "documents" dans Supabase Storage (public read).</div>
+<div class="card"><strong>Email invitation</strong> — Fonctionne avec le SMTP par défaut Supabase. En production, configurer un SMTP personnalisé.</div>
+<div class="card"><strong>SMTP Supabase</strong> — Le rate-limit par défaut est 3 emails/heure. Configurer un service SMTP en production (Sendgrid, Resend, etc.).</div>
+
+<!-- VARIABLES ENV -->
+<h2>⚙️ Variables d'environnement Vercel</h2>
+<table>
+<tr><th>Variable</th><th>Valeur</th></tr>
+<tr><td><code>REACT_APP_SUPABASE_URL</code></td><td>https://jvwokbbgzbmpmwjcakqf.supabase.co</td></tr>
+<tr><td><code>REACT_APP_SUPABASE_ANON_KEY</code></td><td>votre clé anon publique</td></tr>
+</table>
+
+<div style="margin-top:32px;padding-top:16px;border-top:1px solid rgba(0,0,0,.1);color:#9E9890;font-size:11px;text-align:center;">
+  ImmoTrack v2.4.0 — Rapport généré le 2025-07-08 — Audit : 39 opérations DB validées, 20 tables, 15 pages, 0 colonne invalide
+</div>
+</div>
+</body>
+</html>
