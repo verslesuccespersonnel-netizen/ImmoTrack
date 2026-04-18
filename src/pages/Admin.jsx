@@ -93,7 +93,7 @@ export default function Admin() {
         prenom: form.prenom_invite || null,
         cree_par: session.user.id,
         bien_id: form.bien_id_invite || null,
-      }).catch(() => {})
+      })
 
       setOpMsg(`Invitation envoyée à ${form.email_invite}. Le compte sera visible dès que l'utilisateur se connecte.`)
       setModal(null); await load()
@@ -163,13 +163,14 @@ export default function Admin() {
     if (!form.ap_proprio_id || !form.ap_agence_id) { setFormErr('Propriétaire et agence requis'); return }
     setSaving(true); setFormErr('')
     try {
-      await supabase.from('agence_proprietaires').upsert({
+      const { error: upsErr } = await supabase.from('agence_proprietaires').upsert({
         agence_id: form.ap_agence_id,
         proprietaire_id: form.ap_proprio_id,
-      }).catch(async () => {
-        // Si table n'existe pas, stocker dans notes du profil
-        await supabase.from('profiles').update({ agence_id: form.ap_agence_id }).eq('id', form.ap_proprio_id)
       })
+      if (upsErr) {
+        // Table absente : fallback sur agence_id dans profiles
+        await supabase.from('profiles').update({ agence_id: form.ap_agence_id }).eq('id', form.ap_proprio_id)
+      }
       setOpMsg('Propriétaire assigné à l\'agence.')
       setModal(null); await load()
     } catch(e) { setFormErr(e.message) }
@@ -190,12 +191,12 @@ export default function Admin() {
         await supabase.from('occupants').delete().in('location_id', locIds)
         await supabase.from('garants').delete().in('location_id', locIds)
       }
-      await supabase.from('tchat_membres').delete().eq('user_id', userId).catch(() => {})
-      await supabase.from('tchat_messages').delete().eq('user_id', userId).catch(() => {})
+      await supabase.from('tchat_membres').delete().eq('user_id', userId)
+      await supabase.from('tchat_messages').delete().eq('user_id', userId)
       await supabase.from('locations').delete().eq('locataire_id', userId)
       await supabase.from('incidents').delete().eq('signale_par', userId)
       await supabase.from('messages').delete().or(`expediteur.eq.${userId},destinataire.eq.${userId}`)
-      await supabase.from('documents').delete().eq('uploaded_by', userId).catch(() => {})
+      await supabase.from('documents').delete().eq('uploaded_by', userId)
       const { error: e } = await supabase.from('profiles').delete().eq('id', userId)
       if (e) throw e
 

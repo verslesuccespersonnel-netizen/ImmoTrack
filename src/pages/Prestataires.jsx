@@ -94,7 +94,7 @@ export default function Prestataires() {
         await supabase.from('prestataire_biens').delete().eq('prestataire_id', prestaId)
         await supabase.from('prestataire_biens').insert(
           form.bien_ids.map(bid => ({ prestataire_id: prestaId, bien_id: bid }))
-        ).catch(() => {})
+        )
       }
       setModal(null); load()
     } catch(e) { setFormErr(e.message) }

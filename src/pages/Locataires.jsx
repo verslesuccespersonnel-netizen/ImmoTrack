@@ -155,7 +155,7 @@ export default function Locataires() {
           date_debut:   form.date_debut,
           type_contrat: form.type_contrat || null,
           cree_par:     session.user.id,
-        }).catch(() => {})
+        })
       }
 
       setModal(null)

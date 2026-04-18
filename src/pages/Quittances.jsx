@@ -5,96 +5,110 @@ import Layout from '../components/Layout'
 
 const MOIS = ['Janvier','Fevrier','Mars','Avril','Mai','Juin','Juillet','Aout','Septembre','Octobre','Novembre','Decembre']
 
-function genererHTMLQuittance(q) {
-  const moisLabel = MOIS[q.mois - 1] + ' ' + q.annee
-  const total = Number(q.loyer) + Number(q.charges || 0)
+function genHTML(q) {
+  const ml  = MOIS[q.mois - 1] + ' ' + q.annee
+  const total = (Number(q.loyer)||0) + (Number(q.charges)||0) - (Number(q.remise)||0)
+  const joursFin = new Date(q.annee, q.mois, 0).getDate()
   return `<!DOCTYPE html>
 <html lang="fr">
 <head>
 <meta charset="utf-8">
-<title>Quittance ${moisLabel}</title>
+<title>Quittance ${ml}</title>
 <style>
-  body { font-family: 'Georgia', serif; color: #1A1714; margin: 0; padding: 40px; background: #fff; }
-  .header { border-bottom: 3px solid #2D5A3D; padding-bottom: 20px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: flex-start; }
-  .logo { font-size: 28px; font-weight: 700; }
-  .logo span:first-child { color: #2D5A3D; }
-  .logo span:last-child { color: #C8813A; }
-  h1 { font-size: 22px; text-align: center; margin: 20px 0; color: #2D5A3D; letter-spacing: 2px; text-transform: uppercase; }
-  .section { background: #F7F5F0; border-radius: 8px; padding: 18px; margin-bottom: 18px; }
-  .section h3 { margin: 0 0 12px; font-size: 13px; color: #6B6560; text-transform: uppercase; letter-spacing: 1px; }
-  .row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid rgba(0,0,0,.06); font-size: 15px; }
-  .row:last-child { border-bottom: none; }
-  .total { background: #E8F2EB; border-radius: 8px; padding: 16px 18px; display: flex; justify-content: space-between; font-size: 18px; font-weight: 700; color: #2D5A3D; margin: 20px 0; }
-  .signature { margin-top: 40px; display: flex; justify-content: space-between; }
-  .sig-box { text-align: center; }
-  .sig-line { border-top: 2px solid #1A1714; width: 220px; margin: 60px auto 8px; }
-  .footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid rgba(0,0,0,.1); font-size: 11px; color: #9E9890; text-align: center; }
-  @media print { body { padding: 20px; } }
+  * { box-sizing: border-box; margin:0; padding:0; }
+  body { font-family:Georgia,serif; color:#1A1714; padding:40px; background:#fff; font-size:14px; line-height:1.6; }
+  .header { display:flex; justify-content:space-between; align-items:flex-start; padding-bottom:18px; margin-bottom:24px; border-bottom:3px solid #2D5A3D; }
+  .logo { font-size:26px; font-weight:700; }
+  .logo .g { color:#2D5A3D; } .logo .a { color:#C8813A; }
+  h1 { font-size:20px; text-align:center; margin:20px 0 6px; color:#2D5A3D; text-transform:uppercase; letter-spacing:2px; }
+  .periode { text-align:center; font-size:15px; color:#2D5A3D; font-weight:600; margin-bottom:22px; }
+  .bloc { background:#F7F5F0; border-radius:8px; padding:16px 18px; margin-bottom:14px; }
+  .bloc h3 { font-size:11px; color:#6B6560; text-transform:uppercase; letter-spacing:1px; margin-bottom:10px; font-family:sans-serif; }
+  .row { display:flex; justify-content:space-between; padding:5px 0; border-bottom:1px solid rgba(0,0,0,.05); font-size:13px; }
+  .row:last-child { border-bottom:none; }
+  .total { display:flex; justify-content:space-between; background:#E8F2EB; border-radius:8px; padding:14px 18px; font-size:18px; font-weight:700; color:#2D5A3D; margin:18px 0; }
+  .declaration { background:#EBF2FC; border-radius:8px; padding:14px 18px; font-size:13px; line-height:1.8; margin-bottom:20px; }
+  .signatures { display:flex; justify-content:space-between; margin-top:32px; }
+  .sig { text-align:center; }
+  .sig-line { border-top:1.5px solid #1A1714; width:200px; margin:48px auto 8px; }
+  .footer { margin-top:28px; padding-top:12px; border-top:1px solid rgba(0,0,0,.08); font-size:10px; color:#9E9890; text-align:center; font-family:sans-serif; }
+  .print-btn { display:flex; gap:10px; justify-content:center; margin:20px 0; padding:16px; background:#f7f5f0; border-radius:8px; }
+  .print-btn button { padding:10px 24px; border-radius:8px; border:none; cursor:pointer; font-size:14px; font-weight:600; font-family:sans-serif; }
+  .btn-print { background:#2D5A3D; color:#fff; }
+  .btn-close { background:#F7F5F0; color:#1A1714; border:1px solid rgba(0,0,0,.15) !important; }
+  @media print { .print-btn { display:none; } body { padding:20px; } }
 </style>
 </head>
 <body>
+  <div class="print-btn">
+    <button class="btn-print" onclick="window.print()">🖨️ Imprimer / Enregistrer en PDF</button>
+    <button class="btn-close" onclick="window.close()">Fermer</button>
+  </div>
+
   <div class="header">
-    <div class="logo"><span>Immo</span><span>Track</span></div>
-    <div style="text-align:right; font-size:13px; color:#6B6560;">
-      Date d'emission : ${new Date().toLocaleDateString('fr-FR')}<br>
-      Reference : QT-${q.annee}${String(q.mois).padStart(2,'0')}-${q.id?.slice(0,8).toUpperCase() || 'DRAFT'}
+    <div class="logo"><span class="g">Immo</span><span class="a">Track</span></div>
+    <div style="text-align:right; font-size:12px; color:#6B6560; font-family:sans-serif;">
+      Emise le : ${new Date().toLocaleDateString('fr-FR')}<br>
+      Ref : QT-${q.annee}${String(q.mois).padStart(2,'0')}-${(q.id||'').slice(0,8).toUpperCase()||'DRAFT'}
     </div>
   </div>
-  
+
   <h1>Quittance de Loyer</h1>
-  <p style="text-align:center; font-size:16px; color:#2D5A3D; font-weight:600; margin-bottom:24px;">${moisLabel}</p>
-  
-  <div class="section">
+  <div class="periode">${ml}</div>
+
+  <div class="bloc">
     <h3>Bailleur</h3>
-    <div class="row"><span>Nom</span><span><strong>${q.proprio_nom || ''}</strong></span></div>
-    <div class="row"><span>Adresse</span><span>${q.proprio_adresse || ''}</span></div>
-    ${q.proprio_email ? `<div class="row"><span>Email</span><span>${q.proprio_email}</span></div>` : ''}
+    <div class="row"><span>Nom</span><span><strong>${q.proprio_nom||''}</strong></span></div>
+    ${q.proprio_adresse ? `<div class="row"><span>Adresse</span><span>${q.proprio_adresse}</span></div>` : ''}
+    ${q.proprio_email   ? `<div class="row"><span>Email</span><span>${q.proprio_email}</span></div>` : ''}
   </div>
-  
-  <div class="section">
+
+  <div class="bloc">
     <h3>Locataire</h3>
-    <div class="row"><span>Nom</span><span><strong>${q.locataire_nom || ''}</strong></span></div>
-    <div class="row"><span>Bien loue</span><span>${q.bien_adresse || ''}</span></div>
-    <div class="row"><span>Periode</span><span>Du 1er au ${new Date(q.annee, q.mois, 0).getDate()} ${moisLabel}</span></div>
+    <div class="row"><span>Nom</span><span><strong>${q.locataire_nom||''}</strong></span></div>
+    <div class="row"><span>Logement</span><span>${q.bien_adresse||''}</span></div>
+    <div class="row"><span>Periode</span><span>Du 1er au ${joursFin} ${ml}</span></div>
   </div>
-  
-  <div class="section">
+
+  <div class="bloc">
     <h3>Detail du reglement</h3>
-    <div class="row"><span>Loyer hors charges</span><span>${Number(q.loyer).toLocaleString('fr-FR')} euros</span></div>
-    ${q.charges > 0 ? `<div class="row"><span>Provisions sur charges</span><span>${Number(q.charges).toLocaleString('fr-FR')} euros</span></div>` : ''}
-    ${q.remise > 0 ? `<div class="row"><span>Remise accordee</span><span>- ${Number(q.remise).toLocaleString('fr-FR')} euros</span></div>` : ''}
+    <div class="row"><span>Loyer hors charges</span><span>${Number(q.loyer||0).toLocaleString('fr-FR')} €</span></div>
+    ${(q.charges>0) ? `<div class="row"><span>Provisions sur charges</span><span>${Number(q.charges).toLocaleString('fr-FR')} €</span></div>` : ''}
+    ${(q.remise>0)  ? `<div class="row"><span>Remise accordee</span><span style="color:#B83232">- ${Number(q.remise).toLocaleString('fr-FR')} €</span></div>` : ''}
+    <div class="row"><span>Mode de paiement</span><span>${q.mode_paiement||'virement'}</span></div>
+    <div class="row"><span>Statut</span><span style="color:${q.statut_paiement==='regle'?'#2D5A3D':'#C8813A'}">${q.statut_paiement==='regle'?'Regle':'En attente'}</span></div>
   </div>
-  
+
   <div class="total">
     <span>Total regle</span>
-    <span>${(total - (q.remise||0)).toLocaleString('fr-FR')} euros</span>
+    <span>${total.toLocaleString('fr-FR')} €</span>
   </div>
-  
-  <p style="font-size:14px; line-height:1.8; background:#EBF2FC; padding:14px 18px; border-radius:8px;">
-    Je soussigne(e) <strong>${q.proprio_nom || '[Bailleur]'}</strong> reconnais avoir recu de
-    <strong>${q.locataire_nom || '[Locataire]'}</strong> la somme de
-    <strong>${(total - (q.remise||0)).toLocaleString('fr-FR')} euros</strong>
+
+  <div class="declaration">
+    Je soussigne(e) <strong>${q.proprio_nom||'[Bailleur]'}</strong> reconnais avoir recu de
+    <strong>${q.locataire_nom||'[Locataire]'}</strong> la somme de
+    <strong>${total.toLocaleString('fr-FR')} euros</strong>
     au titre du loyer et des charges du logement situe au
-    <strong>${q.bien_adresse || '[Adresse]'}</strong>
-    pour la periode du 1er au ${new Date(q.annee, q.mois, 0).getDate()} ${moisLabel}.
+    <strong>${q.bien_adresse||'[Adresse]'}</strong>
+    pour la periode du 1er au ${joursFin} ${ml}.
     Et lui en donne bonne et valable quittance, sous reserve de tous mes droits.
-  </p>
-  
-  <div class="signature">
-    <div class="sig-box">
-      <div style="font-size:13px; color:#6B6560; margin-bottom:4px;">Le bailleur</div>
+  </div>
+
+  <div class="signatures">
+    <div class="sig">
+      <div style="font-size:12px;color:#6B6560;font-family:sans-serif;">Le bailleur</div>
       <div class="sig-line"></div>
-      <div style="font-size:12px;">${q.proprio_nom || ''}</div>
+      <div style="font-size:12px;font-family:sans-serif;">${q.proprio_nom||''}</div>
     </div>
-    <div class="sig-box">
-      <div style="font-size:13px; color:#6B6560; margin-bottom:4px;">Date</div>
+    <div class="sig">
+      <div style="font-size:12px;color:#6B6560;font-family:sans-serif;">Date</div>
       <div class="sig-line"></div>
-      <div style="font-size:12px;">${new Date().toLocaleDateString('fr-FR')}</div>
+      <div style="font-size:12px;font-family:sans-serif;">${new Date().toLocaleDateString('fr-FR')}</div>
     </div>
   </div>
-  
+
   <div class="footer">
-    Document genere par ImmoTrack - ${new Date().toLocaleDateString('fr-FR')} a ${new Date().toLocaleTimeString('fr-FR', {hour:'2-digit',minute:'2-digit'})}
+    Document genere par ImmoTrack &mdash; ${new Date().toLocaleDateString('fr-FR')} ${new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}
   </div>
 </body>
 </html>`
@@ -109,69 +123,63 @@ export default function Quittances() {
   const [form,       setForm]       = useState({})
   const [saving,     setSaving]     = useState(false)
   const [formErr,    setFormErr]    = useState('')
-  const [preview,    setPreview]    = useState(null)
 
-  const now = new Date()
+  const now          = new Date()
   const defaultMois  = now.getMonth() + 1
   const defaultAnnee = now.getFullYear()
 
   const load = useCallback(async () => {
-    if (!session?.user || !profile) return
+    if (!session?.user || !profile?.role) return
     setLoading(true)
     try {
       const isAdmin = profile.role === 'admin'
+      const isMgr   = ['proprietaire','gestionnaire','agence','admin'].includes(profile.role)
+      if (!isMgr) { setLoading(false); return }
 
-      const biensRes = isAdmin
-        ? await supabase.from('biens').select('id')
-        : await supabase.from('biens').select('id').eq('proprietaire_id', session.user.id)
-      const myBienIds = (biensRes.data || []).map(b => b.id)
+      let bienIds = []
+      if (isAdmin) {
+        const { data: b } = await supabase.from('biens').select('id')
+        bienIds = (b||[]).map(x=>x.id)
+      } else {
+        const { data: b } = await supabase.from('biens').select('id').eq('proprietaire_id', session.user.id)
+        bienIds = (b||[]).map(x=>x.id)
+      }
 
-      // Charger les locations actives
       let locsData = []
-      if (myBienIds.length > 0) {
-        const lr = await supabase.from('locations')
-          .select('id, loyer_mensuel, charges, bien_id, locataire_id, biens!locations_bien_id_fkey(adresse, ville), profiles!locataire_id(nom, prenom, email)')
-          .in('bien_id', myBienIds)
-          .eq('statut', 'actif')
-        locsData = lr.data || []
-      } else if (isAdmin) {
-        const lr = await supabase.from('locations')
-          .select('id, loyer_mensuel, charges, bien_id, locataire_id, biens!locations_bien_id_fkey(adresse, ville), profiles!locataire_id(nom, prenom, email)')
-          .eq('statut', 'actif')
-        locsData = lr.data || []
+      if (bienIds.length > 0) {
+        const { data: lr } = await supabase.from('locations')
+          .select(`id, loyer_mensuel, charges,
+            bien_id, locataire_id,
+            biens!locations_bien_id_fkey(adresse,ville),
+            profiles!locataire_id(nom,prenom,email)`)
+          .in('bien_id', bienIds)
+          .eq('statut','actif')
+        locsData = lr || []
       }
       setLocations(locsData)
 
-      // Charger les quittances existantes depuis la table documents
       const { data: qdocs } = await supabase.from('documents')
-        .select('*')
-        .eq('type', 'Quittance')
-        .order('created_at', { ascending: false })
+        .select('*').eq('type','Quittance').order('created_at',{ascending:false})
       setQuittances(qdocs || [])
-
-    } catch(e) {
-      console.error(e)
-    } finally {
-      setLoading(false)
-    }
+    } catch(e) { console.error(e) }
+    finally { setLoading(false) }
   }, [session?.user?.id, profile?.role])
 
   useEffect(() => { load() }, [load])
 
-  function set(k, v) { setForm(f => ({...f, [k]: v})) }
+  function set(k,v) { setForm(f=>({...f,[k]:v})) }
 
   function openModal(loc) {
-    const proprio = profile
     setFormErr('')
     setForm({
       location_id:     loc.id,
       bien_id:         loc.bien_id,
       locataire_id:    loc.locataire_id,
-      locataire_nom:   loc.profiles ? loc.profiles.prenom + ' ' + loc.profiles.nom : '',
+      locataire_nom:   loc.profiles ? loc.profiles.prenom+' '+loc.profiles.nom : 'Locataire',
       locataire_email: loc.profiles?.email || '',
-      bien_adresse:    loc.biens ? loc.biens.adresse + ', ' + loc.biens.ville : '',
-      proprio_nom:     (proprio.prenom || '') + ' ' + (proprio.nom || ''),
-      proprio_adresse: proprio.adresse || '',
+      bien_adresse:    loc.biens ? loc.biens.adresse+', '+loc.biens.ville : '',
+      proprio_nom:     (profile.prenom||'')+' '+(profile.nom||''),
+      proprio_adresse: profile.adresse || '',
       proprio_email:   session.user.email || '',
       loyer:           loc.loyer_mensuel || 0,
       charges:         loc.charges || 0,
@@ -184,48 +192,40 @@ export default function Quittances() {
     setModal('create')
   }
 
-  async function genererQuittance() {
+  // Ouvre la quittance dans un nouvel onglet avec bouton imprimer/PDF
+  function ouvrirApercu(data) {
+    const html = genHTML(data)
+    const win  = window.open('','_blank')
+    if (win) { win.document.write(html); win.document.close() }
+  }
+
+  async function genererQuittance(envoyerAuLocataire) {
     if (!form.location_id || !form.mois || !form.annee) {
-      setFormErr('Location, mois et annee sont obligatoires')
-      return
+      setFormErr('Location, mois et annee obligatoires'); return
     }
     setSaving(true); setFormErr('')
     try {
-      const html = genererHTMLQuittance(form)
+      const html = genHTML(form)
       const blob = new Blob([html], {type:'text/html'})
-      const nomFichier = `Quittance_${MOIS[form.mois-1]}_${form.annee}_${form.locataire_nom?.replace(' ','_') || 'locataire'}.html`
+      const nomFichier = `Quittance_${MOIS[form.mois-1]}_${form.annee}_${(form.locataire_nom||'loc').replace(/\s+/g,'_')}.html`
 
-      // Sauvegarder dans Supabase Storage si disponible, sinon en base64
+      // Upload Storage → fallback data URL
       let urlDoc = null
-      try {
-        const path = `quittances/${session.user.id}/${Date.now()}_${nomFichier}`
-        const { error: upErr } = await supabase.storage.from('documents').upload(path, blob, {contentType:'text/html'})
-        if (!upErr) {
-          const { data: { publicUrl } } = supabase.storage.from('documents').getPublicUrl(path)
-          urlDoc = publicUrl
-        }
-      } catch {}
-
-      // Fallback : data URL
+      const path = `quittances/${session.user.id}/${Date.now()}_${nomFichier}`
+      const { error: upErr } = await supabase.storage.from('documents').upload(path, blob, {contentType:'text/html'})
+      if (!upErr) {
+        const { data: { publicUrl } } = supabase.storage.from('documents').getPublicUrl(path)
+        urlDoc = publicUrl
+      }
       if (!urlDoc) {
-        const reader = new FileReader()
         urlDoc = await new Promise(res => {
-          reader.onload = () => res(reader.result)
-          reader.readAsDataURL(blob)
+          const r = new FileReader()
+          r.onload = () => res(r.result)
+          r.readAsDataURL(blob)
         })
       }
 
-      // Enregistrer dans la table documents
-      const metaStr = JSON.stringify({
-        location_id:     form.location_id,
-        locataire_id:    form.locataire_id,
-        mois:            form.mois,
-        annee:           form.annee,
-        loyer:           form.loyer,
-        charges:         form.charges,
-        remise:          form.remise,
-        statut_paiement: form.statut_paiement,
-      })
+      // INSERT documents (meta=JSON)
       const { data: doc, error: docErr } = await supabase.from('documents').insert({
         nom:         nomFichier,
         type:        'Quittance',
@@ -233,85 +233,80 @@ export default function Quittances() {
         bien_id:     form.bien_id,
         uploaded_by: session.user.id,
         favori:      false,
-        meta:        metaStr,
+        meta:        JSON.stringify({
+          location_id: form.location_id,
+          locataire_id: form.locataire_id,
+          mois: form.mois, annee: form.annee,
+          loyer: form.loyer, charges: form.charges,
+          remise: form.remise, statut_paiement: form.statut_paiement,
+        }),
       }).select().single()
-
       if (docErr) throw docErr
 
-      // Notifier le locataire via un message
+      // Message automatique si locataire lié
       if (form.locataire_id) {
-        await supabase.from('messages').insert({
+        const contenu = envoyerAuLocataire
+          ? `Bonjour ${form.locataire_nom},\n\nVotre quittance de loyer pour ${MOIS[form.mois-1]} ${form.annee} est disponible.\nMontant : ${((Number(form.loyer)||0)+(Number(form.charges)||0)-(Number(form.remise)||0)).toLocaleString('fr-FR')} euros.\n\nVous pouvez la consulter, l'imprimer ou l'enregistrer en PDF depuis votre espace Documents.`
+          : `Quittance ${MOIS[form.mois-1]} ${form.annee} disponible dans vos documents. Montant : ${((Number(form.loyer)||0)+(Number(form.charges)||0)-(Number(form.remise)||0)).toLocaleString('fr-FR')} euros.`
+
+        const { error: msgErr } = await supabase.from('messages').insert({
           expediteur:   session.user.id,
           destinataire: form.locataire_id,
-          contenu:      `Votre quittance de loyer pour ${MOIS[form.mois-1]} ${form.annee} est disponible dans vos documents. Montant : ${(Number(form.loyer) + Number(form.charges||0) - Number(form.remise||0)).toLocaleString('fr-FR')} euros.`,
-        }).catch(() => {})
+          contenu,
+        })
+        if (msgErr) console.warn('Message non envoye:', msgErr.message)
       }
 
       setModal(null)
       await load()
 
-      // Proposer le telechargement
-      const a = document.createElement('a')
-      a.href = urlDoc
-      a.download = nomFichier
-      a.target = '_blank'
-      a.click()
+      // Ouvrir apercu avec bouton imprimer
+      ouvrirApercu({...form, id: doc?.id})
 
-    } catch(e) {
-      setFormErr(e.message)
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  function previsualiser() {
-    const html = genererHTMLQuittance(form)
-    const win = window.open('', '_blank')
-    if (win) { win.document.write(html); win.document.close() }
+    } catch(e) { setFormErr(e.message) }
+    finally { setSaving(false) }
   }
 
   if (loading) return <Layout><div className="it-center"><div className="it-spinner"/></div></Layout>
-
-  const unreadNotif = 0
 
   return (
     <Layout>
       <div className="page-header">
         <div>
           <h1 className="page-title">Quittances de loyer</h1>
-          <p className="page-sub">{locations.length} location(s) active(s) - {quittances.length} quittance(s) emise(s)</p>
+          <p className="page-sub">{locations.length} location(s) active(s) — {quittances.length} quittance(s) emise(s)</p>
         </div>
       </div>
 
-      {locations.length === 0 && (
+      {locations.length === 0 ? (
         <div className="card">
-          <div className="card-body" style={{textAlign:'center', padding:40, color:'#9E9890'}}>
-            Aucune location active. Attribuez un locataire a un bien pour generer des quittances.
+          <div className="card-body" style={{textAlign:'center',padding:40,color:'#9E9890'}}>
+            Aucune location active. Attribuez un locataire a un bien depuis le menu Biens.
           </div>
         </div>
-      )}
-
-      {/* Locations actives - generateur */}
-      {locations.length > 0 && (
+      ) : (
         <>
-          <div style={{fontWeight:600, fontSize:14, marginBottom:12, color:'#2D5A3D'}}>
+          <div style={{fontWeight:600,fontSize:14,marginBottom:12,color:'#2D5A3D'}}>
             Generer une quittance
           </div>
-          <div className="grid3" style={{gap:10, marginBottom:24}}>
+          <div className="grid3" style={{gap:10,marginBottom:24}}>
             {locations.map(loc => {
-              const total = Number(loc.loyer_mensuel||0) + Number(loc.charges||0)
-              const nom   = loc.profiles ? loc.profiles.prenom + ' ' + loc.profiles.nom : 'Locataire sans compte'
-              const adresse = loc.biens ? loc.biens.adresse : 'Bien inconnu'
+              const total = (Number(loc.loyer_mensuel||0)) + (Number(loc.charges||0))
+              const nom   = loc.profiles ? loc.profiles.prenom+' '+loc.profiles.nom : 'Locataire sans compte'
+              const adresse = loc.biens?.adresse || 'Bien inconnu'
               return (
                 <div key={loc.id} className="card" style={{cursor:'pointer'}} onClick={() => openModal(loc)}>
                   <div className="card-body" style={{padding:14}}>
-                    <div style={{fontSize:20, marginBottom:6}}>🧾</div>
-                    <div style={{fontWeight:600, fontSize:13, marginBottom:2}}>{nom}</div>
-                    <div style={{fontSize:12, color:'#6B6560', marginBottom:6}}>{adresse}</div>
-                    <div style={{fontSize:12, fontWeight:600, color:'#2D5A3D'}}>{total.toLocaleString('fr-FR')} euros/mois</div>
+                    <div style={{fontSize:20,marginBottom:6}}>🧾</div>
+                    <div style={{fontWeight:600,fontSize:13,marginBottom:2}}>{nom}</div>
+                    <div style={{fontSize:12,color:'#6B6560',marginBottom:6}}>{adresse}</div>
+                    <div style={{fontSize:12,fontWeight:600,color:'#2D5A3D'}}>{total.toLocaleString('fr-FR')} euros/mois</div>
+                    {!loc.locataire_id && (
+                      <div style={{fontSize:11,color:'#C8813A',marginTop:4}}>⚠️ Locataire sans compte</div>
+                    )}
                     <div style={{marginTop:8}}>
-                      <span style={{fontSize:11, background:'#E8F2EB', color:'#2D5A3D', padding:'2px 8px', borderRadius:12, fontWeight:600}}>
-                        Generer quittance
+                      <span style={{fontSize:11,background:'#E8F2EB',color:'#2D5A3D',padding:'2px 8px',borderRadius:12,fontWeight:600}}>
+                        Generer quittance →
                       </span>
                     </div>
                   </div>
@@ -322,33 +317,39 @@ export default function Quittances() {
         </>
       )}
 
-      {/* Quittances emises */}
       {quittances.length > 0 && (
         <>
-          <div style={{fontWeight:600, fontSize:14, marginBottom:12}}>Quittances emises</div>
+          <div style={{fontWeight:600,fontSize:14,marginBottom:12}}>Quittances emises</div>
           <div className="card">
             {quittances.map(q => {
               let meta = {}
-              try { meta = JSON.parse(q.meta || '{}') } catch {}
-              const moisLabel = meta.mois ? MOIS[meta.mois-1] + ' ' + meta.annee : ''
+              try { meta = JSON.parse(q.meta||'{}') } catch {}
+              const ml = meta.mois ? MOIS[meta.mois-1]+' '+meta.annee : ''
               return (
                 <div key={q.id} className="row-item">
                   <span style={{fontSize:20}}>🧾</span>
-                  <div style={{flex:1}}>
-                    <div style={{fontWeight:500, fontSize:13}}>{q.nom}</div>
-                    <div style={{fontSize:11, color:'#9E9890'}}>
-                      {moisLabel}
-                      {meta.loyer ? ' - ' + (Number(meta.loyer)+Number(meta.charges||0)).toLocaleString('fr-FR') + ' euros' : ''}
-                      {' - Emise le ' + new Date(q.created_at).toLocaleDateString('fr-FR')}
+                  <div style={{flex:1,minWidth:0}}>
+                    <div style={{fontWeight:500,fontSize:13,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{q.nom}</div>
+                    <div style={{fontSize:11,color:'#9E9890'}}>
+                      {ml}{meta.loyer ? ' — '+(Number(meta.loyer)+Number(meta.charges||0)).toLocaleString('fr-FR')+' euros' : ''}
+                      {' — '+new Date(q.created_at).toLocaleDateString('fr-FR')}
                     </div>
                   </div>
                   {meta.statut_paiement === 'regle'
                     ? <span className="status status-green">Regle</span>
-                    : <span className="status status-yellow">En attente</span>
-                  }
-                  <a href={q.url} target="_blank" rel="noopener noreferrer" className="btn btn-secondary btn-sm">
-                    Ouvrir
-                  </a>
+                    : <span className="status status-yellow">En attente</span>}
+                  <button className="btn btn-secondary btn-sm"
+                    onClick={() => ouvrirApercu({
+                      ...meta,
+                      id: q.id,
+                      proprio_nom:     (profile.prenom||'')+' '+(profile.nom||''),
+                      proprio_adresse: profile.adresse||'',
+                      proprio_email:   session.user.email||'',
+                      locataire_nom:   q.nom?.replace('Quittance_','')?.replace(/_/g,' ')?.replace('.html','') || '',
+                      bien_adresse:    '',
+                    })}>
+                    🖨️ Imprimer / PDF
+                  </button>
                 </div>
               )
             })}
@@ -356,19 +357,20 @@ export default function Quittances() {
         </>
       )}
 
-      {/* Modal generation */}
+      {/* Modal génération */}
       {modal === 'create' && (
-        <div className="modal-overlay" onClick={e => e.target === e.currentTarget && setModal(null)}>
+        <div className="modal-overlay" onClick={e => e.target===e.currentTarget && setModal(null)}>
           <div className="modal modal-lg">
             <div className="modal-header">
               <span className="modal-title">Generer une quittance</span>
-              <button className="modal-close" onClick={() => setModal(null)}>X</button>
+              <button className="modal-close" onClick={() => setModal(null)}>✕</button>
             </div>
             <div className="modal-body">
               {formErr && <div className="alert alert-error">{formErr}</div>}
 
-              <div style={{background:'#E8F2EB', borderRadius:8, padding:'10px 14px', marginBottom:12, fontSize:13}}>
-                <strong>Locataire :</strong> {form.locataire_nom || 'Sans compte'}<br/>
+              <div style={{background:'#E8F2EB',borderRadius:8,padding:'10px 14px',marginBottom:12,fontSize:13}}>
+                <strong>Locataire :</strong> {form.locataire_nom}
+                {form.locataire_email && <span style={{color:'#9E9890',marginLeft:8}}>{form.locataire_email}</span>}<br/>
                 <strong>Bien :</strong> {form.bien_adresse}
               </div>
 
@@ -391,42 +393,52 @@ export default function Quittances() {
                 <div className="fld"><label>Loyer HC (euros)</label><input type="number" value={form.loyer||0} onChange={e=>set('loyer',e.target.value)}/></div>
                 <div className="fld"><label>Charges (euros)</label><input type="number" value={form.charges||0} onChange={e=>set('charges',e.target.value)}/></div>
               </div>
-              <div className="fld"><label>Remise accordee (euros)</label><input type="number" value={form.remise||0} onChange={e=>set('remise',e.target.value)} placeholder="0 si aucune remise"/></div>
 
               <div className="grid2">
-                <div className="fld">
-                  <label>Statut paiement</label>
-                  <select value={form.statut_paiement||'regle'} onChange={e=>set('statut_paiement',e.target.value)}>
-                    <option value="regle">Regle</option>
-                    <option value="partiel">Partiel</option>
-                    <option value="en_attente">En attente</option>
-                  </select>
-                </div>
+                <div className="fld"><label>Remise (euros)</label><input type="number" value={form.remise||0} onChange={e=>set('remise',e.target.value)}/></div>
                 <div className="fld">
                   <label>Mode de paiement</label>
                   <select value={form.mode_paiement||'virement'} onChange={e=>set('mode_paiement',e.target.value)}>
                     <option value="virement">Virement bancaire</option>
                     <option value="cheque">Cheque</option>
                     <option value="especes">Especes</option>
-                    <option value="prelevement">Prelevement</option>
-                    <option value="autre">Autre</option>
+                    <option value="prelevement">Prelevement automatique</option>
                   </select>
                 </div>
               </div>
 
-              <div style={{background:'#F7F5F0', borderRadius:8, padding:'10px 14px', fontSize:13, marginBottom:12}}>
-                <strong>Total a percevoir : </strong>
-                {((Number(form.loyer)||0) + (Number(form.charges)||0) - (Number(form.remise)||0)).toLocaleString('fr-FR')} euros
-                {form.locataire_id && <span style={{color:'#9E9890', fontSize:11, marginLeft:8}}>(Le locataire sera notifie par message)</span>}
+              <div className="fld">
+                <label>Statut paiement</label>
+                <select value={form.statut_paiement||'regle'} onChange={e=>set('statut_paiement',e.target.value)}>
+                  <option value="regle">Regle</option>
+                  <option value="partiel">Paiement partiel</option>
+                  <option value="en_attente">En attente</option>
+                </select>
               </div>
 
-              <div style={{display:'flex', gap:8}}>
-                <button className="btn btn-secondary" onClick={previsualiser} type="button">
-                  Previsualiser
+              <div style={{background:'#F7F5F0',borderRadius:8,padding:'10px 14px',fontSize:13,marginBottom:4}}>
+                <strong>Total : </strong>
+                {((Number(form.loyer)||0)+(Number(form.charges)||0)-(Number(form.remise)||0)).toLocaleString('fr-FR')} euros
+              </div>
+
+              {!form.locataire_id && (
+                <div className="alert alert-warn" style={{fontSize:12}}>
+                  Ce locataire n'a pas de compte ImmoTrack — aucun message de notification ne sera envoye.
+                </div>
+              )}
+
+              <div style={{display:'flex',gap:8,flexWrap:'wrap',marginTop:4}}>
+                <button className="btn btn-secondary" onClick={() => ouvrirApercu(form)} type="button">
+                  👁️ Apercu
                 </button>
-                <button className="btn btn-primary" onClick={genererQuittance} disabled={saving}>
-                  {saving ? 'Generation...' : 'Generer et enregistrer'}
+                <button className="btn btn-secondary" onClick={() => genererQuittance(false)} disabled={saving}>
+                  💾 Generer et enregistrer
                 </button>
+                {form.locataire_id && (
+                  <button className="btn btn-primary" onClick={() => genererQuittance(true)} disabled={saving}>
+                    {saving ? 'Envoi...' : '✉️ Generer et envoyer au locataire'}
+                  </button>
+                )}
               </div>
             </div>
           </div>
