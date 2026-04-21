@@ -56,7 +56,16 @@ export default function Dashboard() {
         </div>
         {profile?.role !== 'locataire'
           ? <button className="btn btn-primary" onClick={() => navigate('/biens')}>Mes biens</button>
-          : <button className="btn btn-primary" onClick={() => navigate('/signaler')}>+ Signaler</button>
+          : (
+            <div style={{display:'flex',gap:8}}>
+              {data?.bien?.id && (
+                <button className="btn btn-secondary" onClick={() => navigate('/biens/'+data.bien.id+'/plan')}>
+                  Plan du logement
+                </button>
+              )}
+              <button className="btn btn-primary" onClick={() => navigate('/signaler')}>+ Signaler</button>
+            </div>
+          )
         }
       </div>
 

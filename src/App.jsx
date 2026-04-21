@@ -54,7 +54,7 @@ function AppRoutes() {
       <Route path="/messages"        element={<Guard><Messages/></Guard>}/>
       <Route path="/demo"            element={<Guard><Demo/></Guard>}/>
       <Route path="/biens"           element={<Guard roles={MGR}><Biens/></Guard>}/>
-      <Route path="/biens/:id/plan"  element={<Guard roles={MGR}><PlanBien/></Guard>}/>
+      <Route path="/biens/:id/plan"  element={<Guard><PlanBien/></Guard>}/>
       <Route path="/locataires"      element={<Guard roles={MGR}><Locataires/></Guard>}/>
       <Route path="/prestataires"    element={<Guard roles={MGR}><Prestataires/></Guard>}/>
       <Route path="/catalogue"       element={<Guard roles={MGR}><Catalogue/></Guard>}/>
