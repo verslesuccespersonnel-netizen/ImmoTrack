@@ -1,14 +1,17 @@
 import { useState, useEffect, useRef } from 'react'
+import { useLocation } from 'react-router-dom'
 import { useAuth } from './AuthContext'
 
 export function useLoad(fetcher, deps) {
   const { loading: authLoading } = useAuth()
+  const location = useLocation()
   const [data,    setData]    = useState(undefined)
   const [loading, setLoading] = useState(true)
   const [error,   setError]   = useState(null)
   const ctrlRef    = useRef(null)
   const fetcherRef = useRef(fetcher)
-  const depsKey    = JSON.stringify(deps || [])
+  // location.key change à chaque navigation vers cette route → force refetch
+  const depsKey    = JSON.stringify([location.key, ...(deps || [])])
   fetcherRef.current = fetcher
 
   useEffect(() => {

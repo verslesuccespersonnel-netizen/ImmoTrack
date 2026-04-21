@@ -1,10 +1,12 @@
 import React, { useEffect, useState, useRef } from 'react'
+import { useLocation } from 'react-router-dom'
 import { useAuth } from '../lib/AuthContext'
 import { supabase } from '../lib/supabase'
 import Layout from '../components/Layout'
 
 export default function Messages() {
   const { session, profile } = useAuth()
+  const location = useLocation()
   const [contacts, setContacts] = useState([])
   const [convs, setConvs]       = useState({}) // { userId: [messages] }
   const [destId, setDestId]     = useState(null)
@@ -21,7 +23,7 @@ export default function Messages() {
       .on('postgres_changes', { event:'INSERT', schema:'public', table:'messages' }, () => loadAll())
       .subscribe()
     return () => sub.unsubscribe()
-  }, [session?.user?.id])
+  }, [session?.user?.id, location.key])
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior:'smooth' })

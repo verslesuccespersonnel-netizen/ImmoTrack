@@ -46,7 +46,7 @@ export default function Tchat() {
       setGroupes(data)
     } catch(e) { console.error(e) }
     finally { setLoading(false) }
-  }, [session?.user?.id, profile?.role])
+  }, [session?.user?.id, profile?.role, location.key])
 
   useEffect(() => { loadGroupes() }, [loadGroupes])
 

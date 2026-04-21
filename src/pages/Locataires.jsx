@@ -90,7 +90,7 @@ export default function Locataires() {
     } finally {
       setLoading(false)
     }
-  }, [session?.user?.id, profile?.role])
+  }, [session?.user?.id, profile?.role, location.key])
 
   useEffect(() => { load() }, [load])
 

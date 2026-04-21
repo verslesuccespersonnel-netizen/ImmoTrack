@@ -52,7 +52,7 @@ export default function Prestataires() {
       setBiens(bR.data || [])
     } catch(e) { setError(e.message) }
     finally { setLoading(false) }
-  }, [session?.user?.id, profile?.role])
+  }, [session?.user?.id, profile?.role, location.key])
 
   useEffect(() => { load() }, [load])
 

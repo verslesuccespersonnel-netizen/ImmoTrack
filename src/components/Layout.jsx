@@ -162,6 +162,7 @@ export default function Layout({ children }) {
                   <div style={{ fontWeight:600, fontSize:13 }}>{profile?.prenom} {profile?.nom}</div>
                   <div style={{ fontSize:11, color:'#9E9890', marginTop:2 }}>{session?.user?.email}</div>
                 </div>
+                <div className="it-dropitem" onClick={() => { navigate('/profil'); setDd(false) }}>👤 Mon profil</div>
                 <div className="it-dropitem" onClick={() => setShowCl(true)}>📋 v{VERSION} — Changelog</div>
                 <div style={{ height:1, background:'rgba(0,0,0,.07)' }}/>
                 <div className="it-dropitem" style={{ color:'#B83232' }} onClick={signOut}>🚪 Se déconnecter</div>

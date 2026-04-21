@@ -17,6 +17,7 @@ import Admin        from './pages/Admin'
 import Demo         from './pages/Demo'
 import Quittances   from './pages/Quittances'
 import Tchat        from './pages/Tchat'
+import Profil       from './pages/Profil'
 
 const MGR = ['proprietaire','gestionnaire','agence','admin']
 
@@ -42,8 +43,10 @@ function Guard({ children, roles }) {
 }
 
 function AppRoutes() {
-  const { session, loading } = useAuth()
+  const { session, loading, recovery } = useAuth()
   if (loading) return <Spinner/>
+  // Mode recovery : forcer le changement de mot de passe
+  if (recovery) return <Profil forcePasswordChange/>
   return (
     <Routes>
       <Route path="/connexion" element={session ? <Navigate to="/" replace/> : <Auth/>}/>
@@ -61,6 +64,7 @@ function AppRoutes() {
       <Route path="/quittances"      element={<Guard roles={MGR}><Quittances/></Guard>}/>
       <Route path="/tchat"           element={<Guard><Tchat/></Guard>}/>
       <Route path="/admin"           element={<Guard roles={MGR}><Admin/></Guard>}/>
+      <Route path="/profil"          element={<Guard><Profil/></Guard>}/>
       <Route path="*"                element={<Navigate to="/" replace/>}/>
     </Routes>
   )

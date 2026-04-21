@@ -20,7 +20,7 @@
       } else if (document.visibilityState === 'visible') {
         var hidden = _hiddenAt ? (Date.now() - _hiddenAt) : 0;
         _hiddenAt = null;
-        if (hidden < 30000) return;
+        if (hidden < 3000) return;
         var modal = document.querySelector('.modal-overlay');
         if (modal && modal.style.display !== 'none') return;
         window.location.reload(true);

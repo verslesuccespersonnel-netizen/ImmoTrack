@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../lib/AuthContext'
 import { supabase } from '../lib/supabase'
 import Layout from '../components/Layout'
@@ -61,7 +61,7 @@ export default function Biens() {
       setProprietaires(pR.data || [])
     } catch(e) { setError(e.message) }
     finally { setLoading(false) }
-  }, [session?.user?.id, profile?.role])
+  }, [session?.user?.id, profile?.role, location.key])
 
   useEffect(() => { load() }, [load])
 

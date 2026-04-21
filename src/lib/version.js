@@ -1,34 +1,35 @@
-export const VERSION = '2.4.0'
-export const BUILD_DATE = '2025-07-08'
+export const VERSION = '2.5.0'
+export const BUILD_DATE = '2025-07-09'
 
 export const CHANGELOG = [
   {
+    version: '2.5.0', date: '2025-07-09', label: 'Sécurité et navigation',
+    changes: [
+      { type:'new',  text:'Page Profil : changer son mot de passe et ses informations' },
+      { type:'fix',  text:'Réinitialisation mot de passe : page sécurisée avant connexion' },
+      { type:'fix',  text:'Navigation : pages rechargées automatiquement à chaque changement de menu' },
+      { type:'new',  text:'Dashboard locataire : plan du logement accessible directement' },
+      { type:'new',  text:'Plan 2D : locataires peuvent déclarer incidents sur pièces et équipements' },
+      { type:'fix',  text:'Plan 2D : drag et resize fonctionnels (draggedRef fix)' },
+      { type:'fix',  text:'Quittances : erreur .catch() corrigée, envoi au locataire fonctionnel' },
+    ]
+  },
+  {
     version: '2.4.0', date: '2025-07-08', label: 'Gestion complète des comptes',
     changes: [
-      { type:'new',  text:'Admin : créer des comptes directement (all roles) avec mot de passe provisoire' },
-      { type:'new',  text:'Admin : inviter par email avec rôle et bien optionnel' },
-      { type:'new',  text:'Admin : onglet Associations — assigner locataire→bien, proprio→agence' },
-      { type:'new',  text:'Admin : email visible dans Modifier, cascade suppression corrigée' },
-      { type:'new',  text:'Connexion : récupération de mot de passe oublié par email' },
-      { type:'new',  text:'Tchat communautaire : groupes par immeuble, temps réel, épinglage' },
-      { type:'fix',  text:'CSS global.css : classes réalignées avec Layout.jsx' },
-      { type:'fix',  text:'useLoad : retente automatiquement dès que l\'auth est prête' },
-      { type:'fix',  text:'Dashboard : biens admin chargés correctement' },
+      { type:'new',  text:'Admin : créer comptes directement, inviter par email' },
+      { type:'new',  text:'Admin : associations locataire→bien, proprio→agence' },
+      { type:'new',  text:'Connexion : récupération mot de passe par email' },
+      { type:'new',  text:'Tchat communautaire : groupes, temps réel, épinglage' },
+      { type:'fix',  text:'CSS : classes réalignées avec Layout.jsx' },
     ]
   },
   {
     version: '2.3.0', date: '2025-07-07', label: 'Biens et Locataires enrichis',
     changes: [
+      { type:'new',  text:'Biens : fiche expandable avec historique locations' },
+      { type:'new',  text:'Quittances : génération HTML, archivage, notification locataire' },
       { type:'fix',  text:'Locataires sans compte visibles dans la liste' },
-      { type:'new',  text:'Biens : création locataire inline, fiche expandable avec historique' },
-      { type:'new',  text:'Quittances : génération automatique avec notification' },
-    ]
-  },
-  {
-    version: '2.2.0', date: '2025-07-06', label: 'Stabilisation',
-    changes: [
-      { type:'fix',  text:'Resize plan 2D : window.mousemove sans conflit' },
-      { type:'fix',  text:'Chargement infini résolu (bfcache + visibilitychange)' },
     ]
   },
   {
@@ -37,6 +38,7 @@ export const CHANGELOG = [
       { type:'new',  text:'React 18 + Supabase v2 + Vercel' },
       { type:'new',  text:'Plan 2D SVG drag+resize multi-niveaux' },
       { type:'new',  text:'Catalogue 200+ équipements et pannes' },
+      { type:'new',  text:'4 rôles : locataire, propriétaire, agence, admin' },
     ]
   },
 ]

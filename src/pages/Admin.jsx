@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react'
+import { useLocation } from 'react-router-dom'
 import { useAuth } from '../lib/AuthContext'
 import { supabase } from '../lib/supabase'
 import Layout from '../components/Layout'
@@ -15,6 +16,7 @@ const MGR = ['proprietaire','gestionnaire','agence','admin']
 
 export default function Admin() {
   const { profile: me, session } = useAuth()
+  const location = useLocation()
   const isAdmin = me?.role === 'admin'
   const isMgr   = MGR.includes(me?.role)
 
@@ -45,7 +47,7 @@ export default function Admin() {
       setInc(iR.data || [])
     } catch(e) { console.error(e) }
     finally { setLoading(false) }
-  }, [isAdmin])
+  }, [isAdmin, location.key])
 
   useEffect(() => { load() }, [load])
 

@@ -163,7 +163,7 @@ export default function Quittances() {
       setQuittances(qdocs || [])
     } catch(e) { console.error(e) }
     finally { setLoading(false) }
-  }, [session?.user?.id, profile?.role])
+  }, [session?.user?.id, profile?.role, location.key])
 
   useEffect(() => { load() }, [load])
 

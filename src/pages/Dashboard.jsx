@@ -144,6 +144,30 @@ export default function Dashboard() {
         </div>
       )}
 
+      {/* Plan du logement pour le locataire */}
+      {profile?.role === 'locataire' && data?.bien?.id && (
+        <div className="card" style={{marginBottom:14}}>
+          <div className="card-header">
+            <span className="card-title">🏠 Plan de mon logement</span>
+            <button className="btn btn-primary btn-sm" onClick={() => navigate('/biens/'+data.bien.id+'/plan')}>
+              Ouvrir le plan
+            </button>
+          </div>
+          <div className="card-body" style={{padding:'14px 16px'}}>
+            <div style={{display:'flex',alignItems:'center',gap:14}}>
+              <div style={{width:52,height:52,borderRadius:12,background:'#E8F2EB',display:'flex',alignItems:'center',justifyContent:'center',fontSize:26,flexShrink:0}}>🏠</div>
+              <div>
+                <div style={{fontWeight:600,fontSize:14}}>{data.bien.adresse}</div>
+                <div style={{fontSize:12,color:'#6B6560',marginTop:2}}>{data.bien.ville}</div>
+                <div style={{fontSize:12,color:'#2D5A3D',marginTop:4}}>
+                  Cliquez sur le plan pour signaler un problème directement sur votre logement.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {profile?.role !== 'locataire' && biens.length > 0 && (
         <div className="card">
           <div className="card-header">
